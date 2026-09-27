@@ -216,3 +216,12 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# CareMind Dataset Directories (Raw and Processed)
+data/
+data/physionet2019/
+data/physionet2019/raw/
+data/physionet2019/processed/
+*.psv
+*.parquet
+
