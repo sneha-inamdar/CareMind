@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CareMind — Multimodal ICU Risk Engine Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #090d16;
+      --panel-bg: rgba(16, 24, 40, 0.75);
+      --panel-border: rgba(255, 255, 255, 0.08);
+      --accent-cyan: #00f2fe;
+      --accent-blue: #4facfe;
+      --accent-purple: #7f00ff;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      
+      --risk-low: #10b981;
+      --risk-med: #f59e0b;
+      --risk-high: #ef4444;
+      
+      --ecg-color: #10b981;
+      --ppg-color: #06b6d4;
+      --abp-color: #f43f5e;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      background: var(--bg-dark);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(79, 172, 254, 0.12) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(127, 0, 255, 0.12) 0px, transparent 50%);
+      color: var(--text-main);
+      font-family: 'Inter', -apple-system, sans-serif;
+      min-height: 100vh;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* HEADER */
+    header {
+      background: var(--panel-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 20px;
+      color: white;
+      box-shadow: 0 4px 20px rgba(79, 172, 254, 0.3);
+    }
+
+    .brand-title h1 {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .brand-title p {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .badge-prototype {
+      background: rgba(0, 242, 254, 0.1);
+      border: 1px solid rgba(0, 242, 254, 0.3);
+      color: var(--accent-cyan);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .controls-bar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    select, button {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--panel-border);
+      color: var(--text-main);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    select:hover, button:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      border: none;
+      font-weight: 600;
+    }
+
+    /* GRID LAYOUT */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1.6fr 1fr;
+      gap: 20px;
+      flex: 1;
+    }
+
+    .panel {
+      background: var(--panel-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: 12px;
+    }
+
+    .panel-header h2 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    /* WAVEFORMS */
+    .waveform-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .waveform-box {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 12px;
+      position: relative;
+    }
+
+    .waveform-label {
+      position: absolute;
+      top: 8px;
+      left: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .lbl-ecg { color: var(--ecg-color); }
+    .lbl-ppg { color: var(--ppg-color); }
+    .lbl-abp { color: var(--abp-color); }
+
+    canvas {
+      width: 100%;
+      height: 90px;
+      display: block;
+    }
+
+    /* VITALS GRID */
+    .vitals-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+    }
+
+    .vital-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--panel-border);
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .vital-name {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .vital-val {
+      font-size: 22px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .vital-unit {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    /* RISK SCORE GAUGE & BREAKDOWN */
+    .risk-main-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 14px;
+      border: 1px solid var(--panel-border);
+      position: relative;
+    }
+
+    .gauge-circle {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: conic-gradient(var(--gauge-color, var(--risk-low)) var(--gauge-pct, 30%), rgba(255, 255, 255, 0.05) 0);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 30px var(--gauge-glow, rgba(16, 185, 129, 0.2));
+      transition: all 0.5s ease;
+    }
+
+    .gauge-inner {
+      width: 114px;
+      height: 114px;
+      border-radius: 50%;
+      background: var(--bg-dark);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .gauge-score {
+      font-size: 34px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      line-height: 1;
+    }
+
+    .gauge-max {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .risk-badge {
+      margin-top: 16px;
+      font-size: 14px;
+      font-weight: 800;
+      padding: 6px 20px;
+      border-radius: 20px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      background: var(--risk-bg, rgba(16, 185, 129, 0.15));
+      color: var(--risk-fg, var(--risk-low));
+      border: 1px solid var(--risk-fg, var(--risk-low));
+    }
+
+    /* MODALITY BREAKDOWN */
+    .modality-scores {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .modality-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--panel-border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .modality-title {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .modality-val {
+      font-size: 20px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .progress-bar {
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+      width: 0%;
+      transition: width 0.5s ease;
+    }
+
+    /* CONTRIBUTING FACTORS */
+    .factors-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .factor-item {
+      background: rgba(255, 255, 255, 0.02);
+      border-left: 3px solid var(--accent-blue);
+      border-radius: 0 8px 8px 0;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .factor-title {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .factor-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .factor-score {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* FOOTER DISCLAIMER */
+    footer {
+      background: rgba(239, 68, 68, 0.08);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      border-radius: 12px;
+      padding: 12px 20px;
+      font-size: 12px;
+      color: #fca5a5;
+      text-align: center;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon">C</div>
+      <div class="brand-title">
+        <h1>CareMind Risk Engine</h1>
+        <p>Multimodal Physiological ICU Decision-Support Prototype</p>
+      </div>
+    </div>
+    
+    <div class="badge-prototype">REAL MIMIC-IV WAVEFORM DATA</div>
+
+    <div class="controls-bar">
+      <select id="recordSelect">
+        <option value="81739927">Record 81739927 (Subj 10014354)</option>
+        <option value="83404654">Record 83404654 (Subj 10020306)</option>
+        <option value="82924339">Record 82924339 (Subj 10126957)</option>
+      </select>
+
+      <button id="btnPrevWindow">← Prev</button>
+      <span id="windowIndicator" style="font-family: 'JetBrains Mono'; font-size: 13px;">Window 1 / 4</span>
+      <button id="btnNextWindow">Next →</button>
+
+      <button id="btnReplay" class="btn-primary">▶ Play Replay</button>
+    </div>
+  </header>
+
+  <!-- DASHBOARD GRID -->
+  <div class="dashboard-grid">
+    
+    <!-- LEFT COLUMN: WAVEFORMS & VITALS -->
+    <div class="panel">
+      <div class="panel-header">
+        <h2>Continuous Physiological Waveforms</h2>
+        <span id="timestampTag" style="font-family: 'JetBrains Mono'; font-size: 12px; color: var(--accent-cyan);">2148-08-16 09:00:00</span>
+      </div>
+
+      <div class="waveform-container">
+        <div class="waveform-box">
+          <div class="waveform-label lbl-ecg">ECG LEAD II (62.5 Hz)</div>
+          <canvas id="ecgCanvas"></canvas>
+        </div>
+
+        <div class="waveform-box">
+          <div class="waveform-label lbl-ppg">PPG / PLETH (62.5 Hz)</div>
+          <canvas id="ppgCanvas"></canvas>
+        </div>
+
+        <div class="waveform-box">
+          <div class="waveform-label lbl-abp">ARTERIAL LINE ABP (mmHg)</div>
+          <canvas id="abpCanvas"></canvas>
+        </div>
+      </div>
+
+      <div class="panel-header" style="margin-top: 8px;">
+        <h2>Observed Bedside Vitals</h2>
+      </div>
+
+      <div class="vitals-grid">
+        <div class="vital-card">
+          <div class="vital-name">HEART RATE</div>
+          <div class="vital-val" id="valHR" style="color: var(--ecg-color);">88</div>
+          <div class="vital-unit">BPM</div>
+        </div>
+
+        <div class="vital-card">
+          <div class="vital-name">SpO2</div>
+          <div class="vital-val" id="valSpO2" style="color: var(--ppg-color);">97</div>
+          <div class="vital-unit">%</div>
+        </div>
+
+        <div class="vital-card">
+          <div class="vital-name">RESP RATE</div>
+          <div class="vital-val" id="valResp">18</div>
+          <div class="vital-unit">BPM</div>
+        </div>
+
+        <div class="vital-card">
+          <div class="vital-name">BLOOD PRESS</div>
+          <div class="vital-val" id="valBP" style="color: var(--abp-color); font-size: 18px;">124/78</div>
+          <div class="vital-unit">mmHg</div>
+        </div>
+
+        <div class="vital-card">
+          <div class="vital-name">MAP</div>
+          <div class="vital-val" id="valMAP">93</div>
+          <div class="vital-unit">mmHg</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: MULTIMODAL FUSED RISK & EXPLANATION -->
+    <div class="panel">
+      <div class="panel-header">
+        <h2>Fused Multimodal Risk Score</h2>
+      </div>
+
+      <div class="risk-main-box">
+        <div class="gauge-circle" id="gaugeCircle">
+          <div class="gauge-inner">
+            <div class="gauge-score" id="gaugeScore">32</div>
+            <div class="gauge-max">/ 100</div>
+          </div>
+        </div>
+
+        <div class="risk-badge" id="riskBadge">LOW RISK</div>
+      </div>
+
+      <div class="panel-header">
+        <h2>Modality Score Breakdown</h2>
+      </div>
+
+      <div class="modality-scores">
+        <div class="modality-card">
+          <div class="modality-title">Clinical Modality</div>
+          <div class="modality-val" id="scoreClinical">34.0</div>
+          <div class="progress-bar"><div class="progress-fill" id="barClinical"></div></div>
+        </div>
+
+        <div class="modality-card">
+          <div class="modality-title">Waveform Modality</div>
+          <div class="modality-val" id="scoreWaveform">31.2</div>
+          <div class="progress-bar"><div class="progress-fill" id="barWaveform"></div></div>
+        </div>
+      </div>
+
+      <div class="panel-header">
+        <h2>Derived Physiological Factors</h2>
+      </div>
+
+      <div class="factors-list" id="factorsContainer">
+        <!-- Factor items rendered dynamically -->
+      </div>
+    </div>
+
+  </div>
+
+  <!-- DISCLAIMER -->
+  <footer>
+    <strong>IMPORTANT DISCLAIMER:</strong> This prototype demonstrates multimodal physiological risk scoring using real MIMIC-IV waveform and clinical data. It is a decision-support demonstration tool, NOT a clinically validated mortality prediction model. Full-scale MIMIC mortality research requires credentialed MIMIC-IV Clinical access.
+  </footer>
+
+  <script>
+    // Local state
+    let currentRecordId = '81739927';
+    let currentWindowIdx = 0;
+    let totalWindows = 4;
+    let isReplaying = false;
+    let replayTimer = null;
+    let cachedData = {};
+
+    // Elements
+    const recordSelect = document.getElementById('recordSelect');
+    const btnPrevWindow = document.getElementById('btnPrevWindow');
+    const btnNextWindow = document.getElementById('btnNextWindow');
+    const btnReplay = document.getElementById('btnReplay');
+    const windowIndicator = document.getElementById('windowIndicator');
+    const timestampTag = document.getElementById('timestampTag');
+
+    const valHR = document.getElementById('valHR');
+    const valSpO2 = document.getElementById('valSpO2');
+    const valResp = document.getElementById('valResp');
+    const valBP = document.getElementById('valBP');
+    const valMAP = document.getElementById('valMAP');
+
+    const gaugeCircle = document.getElementById('gaugeCircle');
+    const gaugeScore = document.getElementById('gaugeScore');
+    const riskBadge = document.getElementById('riskBadge');
+
+    const scoreClinical = document.getElementById('scoreClinical');
+    const scoreWaveform = document.getElementById('scoreWaveform');
+    const barClinical = document.getElementById('barClinical');
+    const barWaveform = document.getElementById('barWaveform');
+    const factorsContainer = document.getElementById('factorsContainer');
+
+    // Canvas contexts
+    const ecgCtx = document.getElementById('ecgCanvas').getContext('2d');
+    const ppgCtx = document.getElementById('ppgCanvas').getContext('2d');
+    const abpCtx = document.getElementById('abpCanvas').getContext('2d');
+
+    // Fetch and analyze
+    async function loadWindowData() {
+      try {
+        const resp = await fetch('/api/multimodal/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ record_id: currentRecordId, window_index: currentWindowIdx })
+        });
+        const data = await resp.json();
+        renderDashboard(data);
+      } catch (err) {
+        console.error('API Error, rendering offline fallback:', err);
+      }
+    }
+
+    function renderDashboard(data) {
+      windowIndicator.innerText = `Window ${data.window_index + 1} / 4`;
+      timestampTag.innerText = data.timestamp || '2148-08-16 09:00:00';
+
+      // Vitals
+      const v = data.clinical_features || {};
+      valHR.innerText = Math.round(v.HR || 75);
+      valSpO2.innerText = Math.round(v.SpO2 || 98);
+      valResp.innerText = Math.round(v.Resp || 16);
+      valBP.innerText = `${Math.round(v.SysBP || 120)}/${Math.round(v.DiaBP || 75)}`;
+      valMAP.innerText = Math.round(v.MAP || 88);
+
+      // Scores
+      const score = Math.round(data.risk_score || 0);
+      gaugeScore.innerText = score;
+      
+      let color = 'var(--risk-low)';
+      let glow = 'rgba(16, 185, 129, 0.3)';
+      let cat = data.risk_category || 'LOW';
+
+      if (cat === 'MEDIUM') {
+        color = 'var(--risk-med)';
+        glow = 'rgba(245, 158, 11, 0.3)';
+      } else if (cat === 'HIGH') {
+        color = 'var(--risk-high)';
+        glow = 'rgba(239, 68, 68, 0.3)';
+      }
+
+      gaugeCircle.style.setProperty('--gauge-color', color);
+      gaugeCircle.style.setProperty('--gauge-pct', `${score}%`);
+      gaugeCircle.style.setProperty('--gauge-glow', glow);
+
+      riskBadge.innerText = `${cat} RISK`;
+      riskBadge.style.setProperty('--risk-fg', color);
+      riskBadge.style.setProperty('--risk-bg', `${color}22`);
+
+      // Modality sub-scores
+      const cScore = data.clinical_score || 0;
+      const wScore = data.waveform_score || 0;
+      scoreClinical.innerText = cScore.toFixed(1);
+      scoreWaveform.innerText = wScore.toFixed(1);
+      barClinical.style.width = `${cScore}%`;
+      barWaveform.style.width = `${wScore}%`;
+
+      // Factors
+      factorsContainer.innerHTML = '';
+      (data.contributing_factors || []).forEach(f => {
+        const item = document.createElement('div');
+        item.className = 'factor-item';
+        item.innerHTML = `
+          <div>
+            <div class="factor-title">${f.factor}</div>
+            <div class="factor-desc">${f.description}</div>
+          </div>
+          <div class="factor-score">+${f.contribution_score}</div>
+        `;
+        factorsContainer.appendChild(item);
+      });
+
+      // Render Waveforms
+      const samples = data.waveform_samples || {};
+      drawWaveform(ecgCtx, samples.ecg || [], 'var(--ecg-color)');
+      drawWaveform(ppgCtx, samples.ppg || [], 'var(--ppg-color)');
+      drawWaveform(abpCtx, samples.abp || [], 'var(--abp-color)');
+    }
+
+    function drawWaveform(ctx, signal, color) {
+      const cvs = ctx.canvas;
+      cvs.width = cvs.clientWidth;
+      cvs.height = cvs.clientHeight;
+
+      ctx.clearRect(0, 0, cvs.width, cvs.height);
+      if (!signal || signal.length === 0) {
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.font = '12px Inter';
+        ctx.fillText('Channel Not Available', 20, cvs.height / 2);
+        return;
+      }
+
+      ctx.beginPath();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.8;
+
+      const step = cvs.width / (signal.length - 1);
+      const min = Math.min(...signal);
+      const max = Math.max(...signal);
+      const range = (max - min) || 1.0;
+
+      signal.forEach((val, i) => {
+        const x = i * step;
+        const norm = (val - min) / range;
+        const y = cvs.height - (norm * (cvs.height - 20) + 10);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+
+      ctx.stroke();
+    }
+
+    // Event Listeners
+    recordSelect.addEventListener('change', (e) => {
+      currentRecordId = e.target.value;
+      currentWindowIdx = 0;
+      loadWindowData();
+    });
+
+    btnPrevWindow.addEventListener('click', () => {
+      if (currentWindowIdx > 0) {
+        currentWindowIdx--;
+        loadWindowData();
+      }
+    });
+
+    btnNextWindow.addEventListener('click', () => {
+      if (currentWindowIdx < totalWindows - 1) {
+        currentWindowIdx++;
+        loadWindowData();
+      }
+    });
+
+    btnReplay.addEventListener('click', () => {
+      if (isReplaying) {
+        clearInterval(replayTimer);
+        isReplaying = false;
+        btnReplay.innerText = '▶ Play Replay';
+      } else {
+        isReplaying = true;
+        btnReplay.innerText = '⏸ Pause';
+        currentWindowIdx = 0;
+        loadWindowData();
+        replayTimer = setInterval(() => {
+          if (currentWindowIdx < totalWindows - 1) {
+            currentWindowIdx++;
+            loadWindowData();
+          } else {
+            clearInterval(replayTimer);
+            isReplaying = false;
+            btnReplay.innerText = '▶ Play Replay';
+          }
+        }, 2000);
+      }
+    });
+
+    // Initial Load
+    loadWindowData();
+  </script>
+</body>
+</html>
