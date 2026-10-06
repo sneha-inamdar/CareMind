@@ -1,0 +1,62 @@
+{
+  "experiment_phase": "Phase 5A",
+  "task_name": "PhysioNet 2019 Baseline Temporal Sepsis Model",
+  "random_seed": 42,
+  "target_column": "SepsisLabel",
+  "excluded_columns": [
+    "patient_id",
+    "time_step",
+    "ICULOS",
+    "Age",
+    "Gender",
+    "Unit1",
+    "Unit2",
+    "HospAdmTime",
+    "SepsisLabel",
+    "EtCO2",
+    "BaseExcess",
+    "HCO3",
+    "FiO2",
+    "pH",
+    "PaCO2",
+    "SaO2",
+    "AST",
+    "BUN",
+    "Alkalinephos",
+    "Calcium",
+    "Chloride",
+    "Creatinine",
+    "Bilirubin_direct",
+    "Glucose",
+    "Lactate",
+    "Magnesium",
+    "Phosphate",
+    "Potassium",
+    "Bilirubin_total",
+    "TroponinI",
+    "Hct",
+    "Hgb",
+    "PTT",
+    "WBC",
+    "Fibrinogen",
+    "Platelets"
+  ],
+  "combined_feature_count": 42,
+  "dataset_splits": {
+    "train": {
+      "patients": 350,
+      "rows": 13623,
+      "positive_rows": 306
+    },
+    "val": {
+      "patients": 75,
+      "rows": 2759,
+      "positive_rows": 68
+    },
+    "test": {
+      "patients": 75,
+      "rows": 2896,
+      "positive_rows": 59
+    }
+  }
+}
