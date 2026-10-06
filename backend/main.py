@@ -16,6 +16,7 @@ from fastapi.responses import HTMLResponse, FileResponse
 from pydantic import BaseModel
 
 from src.mimic.multimodal_prototype import CareMindMultimodalPrototype
+from src.mimic.simulation import CareMindSimulationEngine
 from src.db.repository import get_repository
 
 app = FastAPI(
@@ -35,6 +36,7 @@ app.add_middleware(
 
 # Core prototype engine instance
 prototype_engine = CareMindMultimodalPrototype()
+simulation_engine = CareMindSimulationEngine()
 
 # Database Repository Abstraction (Supabase if configured, or Local JSON fallback)
 db_repository = get_repository()
@@ -86,6 +88,15 @@ def get_icu_patients_overview(window_index: int = Query(0, ge=0, le=3)):
     Returns all monitored ICU patients at the specified observation window,
     AUTOMATICALLY SORTED BY HIGHEST CAREMIND RISK SCORE FIRST.
     """
+    if simulation_engine.is_running and window_index == simulation_engine.current_step:
+        state = simulation_engine.get_simulation_state()
+        return {
+            "status": "success",
+            "window_index": simulation_engine.current_step,
+            "patient_count": state["patient_count"],
+            "patients": state["patients"]
+        }
+
     patients = db_repository.get_patients_overview(window_index=window_index)
     return {
         "status": "success",
@@ -162,6 +173,39 @@ def replay_record(record_id: str):
         "total_windows": len(timeline),
         "timeline": timeline
     }
+
+
+# Alert & Real-Time Simulation API Endpoints
+@app.get("/api/alerts")
+def get_active_alerts():
+    """GET /api/alerts - Returns all currently active alerts across ICU patients."""
+    alerts = simulation_engine.alert_engine.get_all_active_alerts()
+    return {"status": "success", "count": len(alerts), "alerts": alerts}
+
+
+@app.get("/api/alerts/{patient_id}")
+def get_patient_alerts(patient_id: str):
+    """GET /api/alerts/{patient_id} - Returns active alerts for a specific patient/record."""
+    alerts = simulation_engine.alert_engine.get_patient_active_alerts(patient_id)
+    return {"status": "success", "record_id": patient_id, "count": len(alerts), "alerts": alerts}
+
+
+@app.get("/api/simulation/state")
+def get_simulation_state():
+    """GET /api/simulation/state - Returns current state of multi-patient simulation."""
+    return simulation_engine.get_simulation_state()
+
+
+@app.post("/api/simulation/start")
+def start_simulation():
+    """POST /api/simulation/start - Starts/resets multi-patient simulation."""
+    return simulation_engine.start()
+
+
+@app.post("/api/simulation/step")
+def step_simulation():
+    """POST /api/simulation/step - Advances simulation across all ICU patients by 1 step."""
+    return simulation_engine.step()
 
 
 # Mount frontend static dashboard if available

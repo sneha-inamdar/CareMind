@@ -191,15 +191,16 @@ class CareMindMultimodalPrototype:
         clin_vitals: Dict[str, float],
         wave_feats: Dict[str, float],
         clin_score: float,
-        wave_score: float
+        wave_score: float,
+        risk_trend_delta: Optional[float] = None
     ) -> List[Dict[str, Any]]:
         """
-        Derive top contributing physiological factors based on feature Z-scores & model importances.
-        No hardcoded strings — strictly derived from observed physiological feature deviations.
+        Derive top contributing physiological factors grounded strictly in observed input features.
+        Each factor provides structured metadata: factor, modality, severity, evidence, contribution_score.
         """
         factors = []
         
-        # Clinical deviations
+        # Clinical vital deviations
         hr = clin_vitals.get("HR")
         spo2 = clin_vitals.get("SpO2")
         resp = clin_vitals.get("Resp")
@@ -208,70 +209,142 @@ class CareMindMultimodalPrototype:
 
         if hr is not None:
             if hr > 100.0:
+                score = round(float(min(30.0, (hr - 100.0) * 0.8)), 1)
+                evid = f"HR of {hr:.1f} bpm exceeds tachycardia threshold (100 bpm)"
                 factors.append({
                     "factor": "Elevated Heart Rate",
+                    "modality": "Clinical Vitals",
+                    "severity": "HIGH",
                     "impact": "HIGH",
-                    "description": f"HR of {hr:.1f} bpm exceeds tachycardia threshold (100 bpm)",
-                    "contribution_score": round(float(min(30.0, (hr - 100.0) * 0.8)), 1)
+                    "evidence": evid,
+                    "description": evid,
+                    "contribution_score": score
                 })
             elif hr < 50.0:
+                score = round(float(min(25.0, (50.0 - hr) * 0.9)), 1)
+                evid = f"HR of {hr:.1f} bpm below lower threshold (50 bpm)"
                 factors.append({
                     "factor": "Bradycardia",
+                    "modality": "Clinical Vitals",
+                    "severity": "MEDIUM",
                     "impact": "MEDIUM",
-                    "description": f"HR of {hr:.1f} bpm below lower threshold (50 bpm)",
-                    "contribution_score": round(float(min(25.0, (50.0 - hr) * 0.9)), 1)
+                    "evidence": evid,
+                    "description": evid,
+                    "contribution_score": score
                 })
 
         if spo2 is not None and spo2 < 94.0:
+            score = round(float(min(35.0, (95.0 - spo2) * 2.5)), 1)
+            evid = f"SpO2 saturation level at {spo2:.1f}% (normal >= 95%)"
             factors.append({
                 "factor": "Hypoxia / Reduced SpO2",
+                "modality": "Clinical Vitals",
+                "severity": "HIGH",
                 "impact": "HIGH",
-                "description": f"SpO2 saturation level at {spo2:.1f}% (normal >= 95%)",
-                "contribution_score": round(float(min(35.0, (95.0 - spo2) * 2.5)), 1)
+                "evidence": evid,
+                "description": evid,
+                "contribution_score": score
             })
 
         if map_bp is not None and map_bp < 65.0:
+            score = round(float(min(35.0, (65.0 - map_bp) * 1.5)), 1)
+            evid = f"Mean Arterial Pressure at {map_bp:.1f} mmHg (target >= 65 mmHg)"
             factors.append({
                 "factor": "Hypotension / Low MAP",
+                "modality": "Clinical Vitals",
+                "severity": "HIGH",
                 "impact": "HIGH",
-                "description": f"Mean Arterial Pressure at {map_bp:.1f} mmHg (target >= 65 mmHg)",
-                "contribution_score": round(float(min(35.0, (65.0 - map_bp) * 1.5)), 1)
+                "evidence": evid,
+                "description": evid,
+                "contribution_score": score
             })
 
         if resp is not None and resp > 22.0:
+            score = round(float(min(20.0, (resp - 22.0) * 1.2)), 1)
+            evid = f"Respiratory rate of {resp:.1f} breaths/min elevated"
             factors.append({
                 "factor": "Tachypnea",
+                "modality": "Clinical Vitals",
+                "severity": "MEDIUM",
                 "impact": "MEDIUM",
-                "description": f"Respiratory rate of {resp:.1f} breaths/min elevated",
-                "contribution_score": round(float(min(20.0, (resp - 22.0) * 1.2)), 1)
+                "evidence": evid,
+                "description": evid,
+                "contribution_score": score
             })
 
-        # Waveform deviations
-        ecg_std = wave_feats.get("ECG_std", 0.0)
-        ppg_std = wave_feats.get("PPG_std", 0.0)
-        abp_std = wave_feats.get("ABP_std", 0.0)
+        # Waveform stream deviations (only if modality signal is present)
+        ecg_missing = wave_feats.get("ECG_is_missing", 1.0)
+        abp_missing = wave_feats.get("ABP_is_missing", 1.0)
+        ppg_missing = wave_feats.get("PPG_is_missing", 1.0)
 
-        if ecg_std > 1.2:
-            factors.append({
-                "factor": "High ECG Waveform Variability",
-                "impact": "MEDIUM",
-                "description": f"ECG standard deviation elevated ({ecg_std:.2f})",
-                "contribution_score": round(float(min(20.0, ecg_std * 10.0)), 1)
-            })
+        if ecg_missing == 0.0:
+            ecg_std = wave_feats.get("ECG_std", 0.0)
+            if ecg_std > 1.2:
+                score = round(float(min(20.0, ecg_std * 10.0)), 1)
+                evid = f"ECG waveform standard deviation elevated ({ecg_std:.2f})"
+                factors.append({
+                    "factor": "High ECG Waveform Variability",
+                    "modality": "ECG",
+                    "severity": "MEDIUM",
+                    "impact": "MEDIUM",
+                    "evidence": evid,
+                    "description": evid,
+                    "contribution_score": score
+                })
 
-        if abp_std > 18.0:
+        if abp_missing == 0.0:
+            abp_std = wave_feats.get("ABP_std", 0.0)
+            if abp_std > 18.0:
+                score = round(float(min(25.0, abp_std * 0.8)), 1)
+                evid = f"ABP waveform variability high (std={abp_std:.1f} mmHg)"
+                factors.append({
+                    "factor": "Arterial Pressure Instability",
+                    "modality": "ABP",
+                    "severity": "HIGH",
+                    "impact": "HIGH",
+                    "evidence": evid,
+                    "description": evid,
+                    "contribution_score": score
+                })
+
+        if ppg_missing == 0.0:
+            ppg_amp = wave_feats.get("PPG_amplitude_range", 0.0)
+            if ppg_amp > 0 and ppg_amp < 0.2:
+                score = round(float(min(20.0, (0.2 - ppg_amp) * 100.0)), 1)
+                evid = f"PPG pulse wave attenuation (amplitude range={ppg_amp:.3f})"
+                factors.append({
+                    "factor": "Attenuated Peripheral Pulse Wave",
+                    "modality": "PPG",
+                    "severity": "MEDIUM",
+                    "impact": "MEDIUM",
+                    "evidence": evid,
+                    "description": evid,
+                    "contribution_score": score
+                })
+
+        # Temporal trend factor
+        if risk_trend_delta is not None and risk_trend_delta >= 5.0:
+            score = round(float(min(30.0, risk_trend_delta * 1.5)), 1)
+            evid = f"CareMind risk score escalated by +{risk_trend_delta:.1f} points in recent observation window"
             factors.append({
-                "factor": "Arterial Pressure Instability",
+                "factor": "Rapid Risk Escalation",
+                "modality": "Temporal Trend",
+                "severity": "HIGH",
                 "impact": "HIGH",
-                "description": f"ABP waveform variability high (std={abp_std:.1f} mmHg)",
-                "contribution_score": round(float(min(25.0, abp_std * 0.8)), 1)
+                "evidence": evid,
+                "description": evid,
+                "contribution_score": score
             })
 
         if not factors:
+            evid = "Vitals and continuous waveform dynamics are within expected ranges"
             factors.append({
                 "factor": "Normal Physiological Parameters",
+                "modality": "General Physiology",
+                "severity": "LOW",
                 "impact": "LOW",
-                "description": "Vitals and continuous waveform dynamics are within expected ranges",
+                "evidence": evid,
+                "description": evid,
                 "contribution_score": 0.0
             })
 
@@ -364,8 +437,10 @@ class CareMindMultimodalPrototype:
         elif risk_score >= 50.0 or (risk_score >= 40.0 and risk_trend_status == "ESCALATING"):
             priority_status = "HIGH_PRIORITY"
 
-        # 5. Derive Explainability Factors
-        factors = self.derive_contributing_factors(clin_vitals, wave_feats, clinical_score, waveform_score)
+        # 5. Derive Explainability Factors (with temporal trend context)
+        factors = self.derive_contributing_factors(
+            clin_vitals, wave_feats, clinical_score, waveform_score, risk_trend_delta=risk_trend_delta
+        )
 
         # Format waveform samples for UI visualization (downsample if needed)
         def sample_signal_for_ui(arr: np.ndarray, max_len: int = 500) -> List[float]:

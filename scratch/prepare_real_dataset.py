@@ -54,7 +54,10 @@ def prepare_data():
         prev_risk = None
         for win_idx, seg in enumerate(rec_info["segment_names"]):
             try:
-                record = wfdb.rdrecord(seg, pn_dir=pn_dir)
+                try:
+                    record = wfdb.rdrecord(seg, pn_dir=pn_dir, sampto=3750)
+                except Exception:
+                    record = wfdb.rdrecord(seg, pn_dir=pn_dir)
                 channels = record.sig_name
                 sig_matrix = record.p_signal
 
