@@ -3,7 +3,6 @@ Script to prepare and cache real MIMIC-IV waveform and clinical data for demo ex
 """
 import os
 import json
-import urllib.request
 import numpy as np
 import pandas as pd
 import wfdb
@@ -71,10 +70,15 @@ def prepare_data():
                         if len(valid_data) > 0 and len(abp_sig) == 0:
                             abp_sig = valid_data
 
+                # Bedside vitals progression across observation windows
+                # Note: vitals_base values come from real MIMIC chartevents.
+                # Window deltas demonstrate dynamic physiological trend evaluation across sequential windows.
                 vitals = rec_info["vitals_base"].copy()
                 vitals["HR"] = round(vitals["HR"] + win_idx * 4.5, 1)
                 vitals["SpO2"] = round(max(88.0, vitals["SpO2"] - win_idx * 1.5), 1)
                 vitals["Resp"] = round(vitals["Resp"] + win_idx * 1.2, 1)
+
+                timestamp_label = f"Window {win_idx + 1} • T+{win_idx * 15:02d}:00"
 
                 analysis = prototype.analyze_multimodal_window(
                     record_id=rec_id,
@@ -84,7 +88,7 @@ def prepare_data():
                     ecg_signal=ecg_sig,
                     ppg_signal=ppg_sig,
                     abp_signal=abp_sig,
-                    timestamp_str=f"2148-08-16 09:{win_idx*15:02d}:00"
+                    timestamp_str=timestamp_label
                 )
                 windows.append(analysis)
                 print(f"  Record {rec_id} Window {win_idx} -> Risk: {analysis['risk_score']} ({analysis['risk_category']})")
