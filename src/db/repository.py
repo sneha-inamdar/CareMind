@@ -121,10 +121,14 @@ class LocalJSONRepository(CareMindBaseRepository):
                     "timestamp": w_data.get("timestamp"),
                     "risk_score": w_data.get("risk_score", 0.0),
                     "risk_category": w_data.get("risk_category", "LOW"),
+                    "risk_trend_status": w_data.get("risk_trend_status", "STABLE"),
+                    "risk_trend_delta": w_data.get("risk_trend_delta", 0.0),
+                    "priority_status": w_data.get("priority_status", "ROUTINE_MONITORING"),
                     "vitals": w_data.get("clinical_features", {}),
                     "primary_alert": primary_alert,
                     "available_modalities": w_data.get("available_modalities", []),
-                    "contributing_factors": factors
+                    "contributing_factors": factors,
+                    "disclaimer": w_data.get("disclaimer", "CareMind Physiological Risk Score is an engineering prototype decision-support metric.")
                 })
 
         # Sort patients descending by highest CareMind risk score first
@@ -157,8 +161,9 @@ class SupabaseRepository(CareMindBaseRepository):
         if not self.config.is_supabase_configured:
             raise ValueError("Supabase environment variables (SUPABASE_URL, SUPABASE_KEY) are missing or invalid.")
         
-        # Initialize Supabase client
-        self.client: Client = create_client(self.config.supabase_url, self.config.supabase_key)
+        # Prefer service key if available for backend operations
+        key = self.config.supabase_service_key or self.config.supabase_key
+        self.client: Client = create_client(self.config.supabase_url, key)
         self.local_fallback = LocalJSONRepository()
 
     def get_available_records(self) -> List[Dict[str, Any]]:
@@ -167,7 +172,7 @@ class SupabaseRepository(CareMindBaseRepository):
             if res.data and len(res.data) > 0:
                 return res.data
         except Exception as err:
-            print(f"[SupabaseRepository] Notice: Fallback to local cache ({err})")
+            print(f"[SupabaseRepository] get_available_records notice: {err}")
         return self.local_fallback.get_available_records()
 
     def get_patients_overview(self, window_index: int = 0) -> List[Dict[str, Any]]:
@@ -177,7 +182,6 @@ class SupabaseRepository(CareMindBaseRepository):
                 .select("*, icu_stays(bed_id, subject_id, careunit), vital_observations(*)") \
                 .execute()
             if res.data and len(res.data) > 0:
-                # Format patient records and sort by risk_score DESC
                 patients = []
                 for row in res.data:
                     stay = row.get("icu_stays", {})
@@ -196,13 +200,49 @@ class SupabaseRepository(CareMindBaseRepository):
                 patients.sort(key=lambda p: p["risk_score"], reverse=True)
                 return patients
         except Exception as err:
-            print(f"[SupabaseRepository] Notice: Fallback to local cache ({err})")
+            print(f"[SupabaseRepository] get_patients_overview notice: {err}")
         return self.local_fallback.get_patients_overview(window_index)
 
     def get_record_detail(self, record_id: str) -> Optional[Dict[str, Any]]:
+        try:
+            res = self.client.table("waveform_records").select("*").eq("record_id", record_id).execute()
+            if res.data and len(res.data) > 0:
+                row = res.data[0]
+                return {
+                    "record_id": row.get("record_id"),
+                    "subject_id": row.get("subject_id"),
+                    "stay_id": row.get("stay_id"),
+                    "tier": row.get("tier"),
+                    "windows_count": 4,
+                    "cached": True,
+                    "source": "supabase"
+                }
+        except Exception as err:
+            print(f"[SupabaseRepository] get_record_detail notice: {err}")
         return self.local_fallback.get_record_detail(record_id)
 
     def get_replay_timeline(self, record_id: str) -> List[Dict[str, Any]]:
+        try:
+            res = self.client.table("observation_windows") \
+                .select("*, vital_observations(*), risk_assessments(*)") \
+                .eq("record_id", record_id) \
+                .order("window_index") \
+                .execute()
+            if res.data and len(res.data) > 0:
+                timeline = []
+                for row in res.data:
+                    vitals = row.get("vital_observations", [{}])[0] if row.get("vital_observations") else {}
+                    risk = row.get("risk_assessments", [{}])[0] if row.get("risk_assessments") else {}
+                    timeline.append({
+                        "window_index": row.get("window_index", 0),
+                        "timestamp": row.get("timestamp_label"),
+                        "clinical_features": vitals,
+                        "risk_score": float(risk.get("risk_score", 0.0)),
+                        "risk_category": risk.get("risk_category", "LOW")
+                    })
+                return timeline
+        except Exception as err:
+            print(f"[SupabaseRepository] get_replay_timeline notice: {err}")
         return self.local_fallback.get_replay_timeline(record_id)
 
 

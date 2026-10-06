@@ -159,7 +159,8 @@ class CareMindMultimodalPrototype:
     def extract_clinical_feature_vector(self, vitals_dict: Dict[str, float]) -> Tuple[np.ndarray, Dict[str, float]]:
         """
         Construct clean clinical feature vector from observed bedside vitals.
-        Uses physiological defaults for unobserved fields to ensure robustness.
+        Uses physiological defaults for unobserved fields to ensure robustness during model inference.
+        Missing observations remain None in the output feat_dict.
         """
         defaults = {
             "HR": 75.0,
@@ -174,11 +175,14 @@ class CareMindMultimodalPrototype:
         feat_dict = {}
         vec = []
         for k in ["HR", "SpO2", "Resp", "SysBP", "DiaBP", "MAP", "Temp"]:
-            val = float(vitals_dict.get(k, defaults[k]))
-            if np.isnan(val) or val <= 0:
-                val = defaults[k]
-            feat_dict[k] = round(val, 2)
-            vec.append(val)
+            val = vitals_dict.get(k)
+            if val is None or (isinstance(val, (int, float)) and (np.isnan(val) or val <= 0)):
+                vec_val = defaults[k]
+                feat_dict[k] = None
+            else:
+                vec_val = float(val)
+                feat_dict[k] = round(vec_val, 2)
+            vec.append(vec_val)
             
         return np.array(vec).reshape(1, -1), feat_dict
 
@@ -196,28 +200,29 @@ class CareMindMultimodalPrototype:
         factors = []
         
         # Clinical deviations
-        hr = clin_vitals.get("HR", 75.0)
-        spo2 = clin_vitals.get("SpO2", 98.0)
-        resp = clin_vitals.get("Resp", 16.0)
-        map_bp = clin_vitals.get("MAP", 88.0)
-        temp = clin_vitals.get("Temp", 37.0)
+        hr = clin_vitals.get("HR")
+        spo2 = clin_vitals.get("SpO2")
+        resp = clin_vitals.get("Resp")
+        map_bp = clin_vitals.get("MAP")
+        temp = clin_vitals.get("Temp")
 
-        if hr > 100.0:
-            factors.append({
-                "factor": "Elevated Heart Rate",
-                "impact": "HIGH",
-                "description": f"HR of {hr:.1f} bpm exceeds tachycardia threshold (100 bpm)",
-                "contribution_score": round(float(min(30.0, (hr - 100.0) * 0.8)), 1)
-            })
-        elif hr < 50.0:
-            factors.append({
-                "factor": "Bradycardia",
-                "impact": "MEDIUM",
-                "description": f"HR of {hr:.1f} bpm below lower threshold (50 bpm)",
-                "contribution_score": round(float(min(25.0, (50.0 - hr) * 0.9)), 1)
-            })
+        if hr is not None:
+            if hr > 100.0:
+                factors.append({
+                    "factor": "Elevated Heart Rate",
+                    "impact": "HIGH",
+                    "description": f"HR of {hr:.1f} bpm exceeds tachycardia threshold (100 bpm)",
+                    "contribution_score": round(float(min(30.0, (hr - 100.0) * 0.8)), 1)
+                })
+            elif hr < 50.0:
+                factors.append({
+                    "factor": "Bradycardia",
+                    "impact": "MEDIUM",
+                    "description": f"HR of {hr:.1f} bpm below lower threshold (50 bpm)",
+                    "contribution_score": round(float(min(25.0, (50.0 - hr) * 0.9)), 1)
+                })
 
-        if spo2 < 94.0:
+        if spo2 is not None and spo2 < 94.0:
             factors.append({
                 "factor": "Hypoxia / Reduced SpO2",
                 "impact": "HIGH",
@@ -225,7 +230,7 @@ class CareMindMultimodalPrototype:
                 "contribution_score": round(float(min(35.0, (95.0 - spo2) * 2.5)), 1)
             })
 
-        if map_bp < 65.0:
+        if map_bp is not None and map_bp < 65.0:
             factors.append({
                 "factor": "Hypotension / Low MAP",
                 "impact": "HIGH",
@@ -233,7 +238,7 @@ class CareMindMultimodalPrototype:
                 "contribution_score": round(float(min(35.0, (65.0 - map_bp) * 1.5)), 1)
             })
 
-        if resp > 22.0:
+        if resp is not None and resp > 22.0:
             factors.append({
                 "factor": "Tachypnea",
                 "impact": "MEDIUM",
@@ -283,10 +288,12 @@ class CareMindMultimodalPrototype:
         ecg_signal: Optional[np.ndarray] = None,
         ppg_signal: Optional[np.ndarray] = None,
         abp_signal: Optional[np.ndarray] = None,
-        timestamp_str: str = "2148-08-16 09:00:00"
+        timestamp_str: str = "2148-08-16 09:00:00",
+        previous_risk_score: Optional[float] = None
     ) -> Dict[str, Any]:
         """
         Execute end-to-end multimodal risk score pipeline for a specific window.
+        Uses adaptive modality fusion and temporal trend evaluation.
         
         Returns full schema-compliant JSON dictionary.
         """
@@ -322,22 +329,45 @@ class CareMindMultimodalPrototype:
         if len(ecg_arr) > 0: available_modalities.append("ECG")
         if len(ppg_arr) > 0: available_modalities.append("PPG")
         if len(abp_arr) > 0: available_modalities.append("ABP")
-        if len(vitals_dict) > 0: available_modalities.append("Clinical Vitals")
+        has_clinical = any(v is not None for v in clin_vitals.values())
+        if has_clinical: available_modalities.append("Clinical Vitals")
 
-        # 3. Stage 2 & 3: Fusion & Risk Scoring
-        X_fusion = np.column_stack([clinical_score, waveform_score, (clinical_score * waveform_score) / 100.0])
-        X_fusion_scaled = self.fusion_scaler.transform(X_fusion)
-        fusion_prob = float(self.fusion_model.predict_proba(X_fusion_scaled)[:, 1][0])
+        # 3. Adaptive Modality Fusion Strategy
+        # If clinical vitals are completely missing, base risk strictly on continuous waveform features.
+        # Otherwise, fuse clinical and waveform scores with adaptive weights.
+        if not has_clinical and len(available_modalities) > 0:
+            raw_fused_score = waveform_score
+        elif has_clinical and len(available_modalities) == 1:
+            raw_fused_score = clinical_score
+        else:
+            X_fusion = np.column_stack([clinical_score, waveform_score, (clinical_score * waveform_score) / 100.0])
+            X_fusion_scaled = self.fusion_scaler.transform(X_fusion)
+            fusion_prob = float(self.fusion_model.predict_proba(X_fusion_scaled)[:, 1][0])
+            raw_fused_score = 0.5 * clinical_score + 0.5 * waveform_score + (fusion_prob - 0.5) * 20.0
 
-        # Composite risk score weighted fusion: 0.5 * clin + 0.5 * wave with model adjustment
-        raw_fused_score = 0.5 * clinical_score + 0.5 * waveform_score + (fusion_prob - 0.5) * 20.0
         risk_score = float(np.clip(raw_fused_score, 0.0, 100.0))
         risk_category = self.calculate_risk_category(risk_score)
 
-        # 4. Derive Explainability Factors
+        # 4. Temporal Trend & Prioritization Logic
+        risk_trend_delta = 0.0
+        risk_trend_status = "STABLE"
+        if previous_risk_score is not None:
+            risk_trend_delta = round(float(risk_score - previous_risk_score), 1)
+            if risk_trend_delta >= 5.0:
+                risk_trend_status = "ESCALATING"
+            elif risk_trend_delta <= -5.0:
+                risk_trend_status = "IMPROVING"
+
+        priority_status = "ROUTINE_MONITORING"
+        if risk_score >= 75.0 or (risk_score >= 60.0 and risk_trend_status == "ESCALATING"):
+            priority_status = "CRITICAL_PRIORITY"
+        elif risk_score >= 50.0 or (risk_score >= 40.0 and risk_trend_status == "ESCALATING"):
+            priority_status = "HIGH_PRIORITY"
+
+        # 5. Derive Explainability Factors
         factors = self.derive_contributing_factors(clin_vitals, wave_feats, clinical_score, waveform_score)
 
-        # 5. Format waveform samples for UI visualization (downsample if needed)
+        # Format waveform samples for UI visualization (downsample if needed)
         def sample_signal_for_ui(arr: np.ndarray, max_len: int = 500) -> List[float]:
             if len(arr) == 0:
                 return []
@@ -358,11 +388,15 @@ class CareMindMultimodalPrototype:
             "fusion_score": round(risk_score, 1),
             "risk_score": round(risk_score, 1),
             "risk_category": risk_category,
+            "risk_trend_delta": risk_trend_delta,
+            "risk_trend_status": risk_trend_status,
+            "priority_status": priority_status,
             "available_modalities": available_modalities,
             "contributing_factors": factors,
             "waveform_samples": {
                 "ecg": sample_signal_for_ui(ecg_arr),
                 "ppg": sample_signal_for_ui(ppg_arr),
                 "abp": sample_signal_for_ui(abp_arr)
-            }
+            },
+            "disclaimer": "CareMind Physiological Risk Score (0-100) is an engineering prototype decision-support metric for physiological instability, not a diagnostic or mortality prediction model."
         }
