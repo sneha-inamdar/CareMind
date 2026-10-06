@@ -2,7 +2,7 @@
 CareMind Multimodal Physiological Risk Engine - FastAPI Backend.
 
 Provides REST and Web API endpoints for multimodal ICU physiological risk scoring,
-window-based sequential timeline replay, and frontend visualization integration.
+multi-patient ICU prioritization, timeline replay, and clinician dashboard integration.
 """
 
 import os
@@ -19,7 +19,7 @@ from src.mimic.multimodal_prototype import CareMindMultimodalPrototype
 
 app = FastAPI(
     title="CareMind Multimodal Risk Engine API",
-    description="API for real continuous waveform and bedside vital multimodal risk scoring.",
+    description="API for real continuous waveform and bedside vital multimodal risk scoring and ICU patient prioritization.",
     version="1.0.0"
 )
 
@@ -58,7 +58,7 @@ def load_cached_record(record_id: str) -> Dict[str, Any]:
 def health_check():
     return {
         "status": "online",
-        "system": "CareMind Multimodal Physiological Risk Engine Prototype",
+        "system": "CareMind Multimodal Physiological Risk Engine",
         "version": "1.0.0"
     }
 
@@ -75,37 +75,91 @@ def get_available_records():
             "record_id": "81739927",
             "subject_id": 10014354,
             "stay_id": 39880770,
+            "bed_id": "Bed ICU-01",
             "duration_hrs": 24.0,
             "fs": 62.5,
             "available_modalities": ["ECG", "PPG", "Resp", "Clinical Vitals"],
             "tier": "Tier 2 (ECG+PPG)",
             "windows_count": 4,
-            "description": "Patient 10014354 - Gradual physiological deterioration across 4 consecutive windows"
+            "description": "Patient #10014354 — Progressive tachycardia & oxygen saturation drop"
         },
         {
             "record_id": "83404654",
             "subject_id": 10020306,
             "stay_id": 38418938,
+            "bed_id": "Bed ICU-02",
             "duration_hrs": 24.0,
             "fs": 62.5,
             "available_modalities": ["ECG", "PPG", "Resp", "Clinical Vitals"],
             "tier": "Tier 2 (ECG+PPG)",
             "windows_count": 4,
-            "description": "Patient 10020306 - Persistent moderate-to-high tachycardia & hypoxemia"
+            "description": "Patient #10020306 — Persistent moderate tachycardia & tachypnea"
         },
         {
             "record_id": "82924339",
             "subject_id": 10126957,
             "stay_id": 39149479,
+            "bed_id": "Bed ICU-03",
             "duration_hrs": 24.0,
             "fs": 125.0,
             "available_modalities": ["ECG", "PPG", "ABP", "Resp", "Clinical Vitals"],
             "tier": "Tier 1 (ECG+ABP+PPG)",
             "windows_count": 4,
-            "description": "Patient 10126957 - Full Tier 1 record with acute hypotensive shock dynamics"
+            "description": "Patient #10126957 — Tier 1 record with acute hypotensive shock dynamics"
         }
     ]
     return {"status": "success", "count": len(records), "records": records}
+
+
+@app.get("/api/multimodal/patients")
+def get_icu_patients_overview(window_index: int = Query(0, ge=0, le=3)):
+    """
+    GET /api/multimodal/patients?window_index=0
+    
+    Returns all monitored ICU patients at the specified observation window,
+    AUTOMATICALLY SORTED BY HIGHEST CAREMIND RISK SCORE FIRST.
+    """
+    records_meta = [
+        {"record_id": "81739927", "subject_id": 10014354, "stay_id": 39880770, "bed_id": "Bed ICU-01"},
+        {"record_id": "83404654", "subject_id": 10020306, "stay_id": 38418938, "bed_id": "Bed ICU-02"},
+        {"record_id": "82924339", "subject_id": 10126957, "stay_id": 39149479, "bed_id": "Bed ICU-03"}
+    ]
+
+    patients = []
+    for meta in records_meta:
+        cached = load_cached_record(meta["record_id"])
+        if cached and "windows" in cached and len(cached["windows"]) > 0:
+            w_idx = min(window_index, len(cached["windows"]) - 1)
+            w_data = cached["windows"][w_idx]
+            
+            # Primary clinical alert derived from top contributing factor
+            factors = w_data.get("contributing_factors", [])
+            primary_alert = factors[0]["factor"] if factors else "Normal Parameters"
+
+            patients.append({
+                "record_id": meta["record_id"],
+                "subject_id": meta["subject_id"],
+                "stay_id": meta["stay_id"],
+                "bed_id": meta["bed_id"],
+                "window_index": w_idx,
+                "timestamp": w_data.get("timestamp"),
+                "risk_score": w_data.get("risk_score", 0.0),
+                "risk_category": w_data.get("risk_category", "LOW"),
+                "vitals": w_data.get("clinical_features", {}),
+                "primary_alert": primary_alert,
+                "available_modalities": w_data.get("available_modalities", []),
+                "contributing_factors": factors
+            })
+
+    # SORT PATIENTS BY HIGHEST RISK SCORE FIRST
+    patients.sort(key=lambda p: p["risk_score"], reverse=True)
+
+    return {
+        "status": "success",
+        "window_index": window_index,
+        "patient_count": len(patients),
+        "patients": patients
+    }
 
 
 @app.get("/api/multimodal/records/{record_id}")
@@ -117,7 +171,6 @@ def get_record_detail(record_id: str):
     """
     cached = load_cached_record(record_id)
     if not cached:
-        # Fallback basic record metadata
         records_map = {
             "81739927": {"subject_id": 10014354, "tier": "Tier 2 (ECG+PPG)"},
             "83404654": {"subject_id": 10020306, "tier": "Tier 2 (ECG+PPG)"},
@@ -158,7 +211,6 @@ def analyze_window(req: AnalyzeRequest):
         
         # Apply vitals override if provided
         if req.vitals_override:
-            # Re-analyze window with override
             rec_id = req.record_id
             subj_id = cached.get("subject_id", 10014354)
             ecg_samples = np.array(res.get("waveform_samples", {}).get("ecg", []))
