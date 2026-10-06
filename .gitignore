@@ -225,3 +225,5 @@ data/physionet2019/processed/
 *.psv
 *.parquet
 
+
+.env
