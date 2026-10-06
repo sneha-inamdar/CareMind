@@ -357,6 +357,18 @@
       display: block;
     }
 
+    .unmonitored-banner {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px dashed var(--panel-border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 11px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
     /* VITALS GRID */
     .vitals-grid {
       display: grid;
@@ -465,31 +477,20 @@
       margin-top: 2px;
     }
 
-    /* RESEARCH ACCORDION (OPTIONAL COLLAPSIBLE) */
+    /* RESEARCH ACCORDION (OPTIONAL SECONDARY SECTION) */
     details.research-accordion {
-      background: rgba(0, 0, 0, 0.2);
+      background: rgba(0, 0, 0, 0.25);
       border: 1px solid var(--panel-border);
       border-radius: 10px;
-      padding: 10px 14px;
+      padding: 12px 16px;
       font-size: 12px;
       color: var(--text-muted);
+      margin-top: 12px;
     }
     details summary {
       cursor: pointer;
       font-weight: 600;
       color: var(--accent-cyan);
-    }
-
-    /* FOOTER DISCLAIMER */
-    footer {
-      background: rgba(239, 68, 68, 0.08);
-      border: 1px solid rgba(239, 68, 68, 0.2);
-      border-radius: 12px;
-      padding: 12px 20px;
-      font-size: 12px;
-      color: #fca5a5;
-      text-align: center;
-      line-height: 1.5;
     }
   </style>
 </head>
@@ -501,7 +502,7 @@
       <div class="brand-icon">C</div>
       <div class="brand-title">
         <h1>CareMind ICU Decision Support</h1>
-        <p>Continuous Multimodal Physiological Monitoring & Prioritization</p>
+        <p>Continuous Multimodal Physiological Monitoring & Risk Prioritization</p>
       </div>
     </div>
     
@@ -512,7 +513,7 @@
 
     <div class="controls-bar">
       <button id="btnPrevWindow">← Prev Window</button>
-      <span id="windowIndicator" style="font-family: 'JetBrains Mono'; font-size: 13px;">Window 1 / 4</span>
+      <span id="windowIndicator" style="font-family: 'JetBrains Mono'; font-size: 13px;">Window 1 • T+00:00</span>
       <button id="btnNextWindow">Next Window →</button>
       <button id="btnReplay" class="btn-primary">▶ Start Live Replay</button>
     </div>
@@ -522,10 +523,10 @@
   <div id="overviewView" class="view-container view-active">
     <div class="section-banner">
       <div>
-        <h2>ICU Patient Prioritization Overview</h2>
-        <p>Patients automatically sorted by highest physiological risk score first. Select any patient to inspect detailed signals.</p>
+        <h2>ICU Patient Prioritization Dashboard</h2>
+        <p>Patients automatically prioritized by CareMind physiological risk score (highest risk first). Select any patient to inspect detailed signals.</p>
       </div>
-      <span style="font-family: 'JetBrains Mono'; font-size: 12px; color: var(--accent-cyan);" id="overviewTimeTag">2148-08-16 09:00:00</span>
+      <span style="font-family: 'JetBrains Mono'; font-size: 12px; color: var(--accent-cyan);" id="overviewTimeTag">Window 1 • T+00:00</span>
     </div>
 
     <div class="patient-grid" id="patientsListContainer">
@@ -551,7 +552,7 @@
       <div class="panel">
         <div class="panel-header">
           <h3>Continuous Waveform Signals</h3>
-          <span id="detailTimeTag" style="font-family: 'JetBrains Mono'; font-size: 12px; color: var(--accent-cyan);">2148-08-16 09:00:00</span>
+          <span id="detailTimeTag" style="font-family: 'JetBrains Mono'; font-size: 12px; color: var(--accent-cyan);">Window 1 • T+00:00</span>
         </div>
 
         <div class="waveform-box" id="boxEcg">
@@ -567,6 +568,10 @@
         <div class="waveform-box" id="boxAbp">
           <div class="waveform-label lbl-abp">ARTERIAL LINE ABP (mmHg)</div>
           <canvas id="abpCanvas"></canvas>
+        </div>
+
+        <div class="unmonitored-banner" id="unmonitoredBanner" style="display: none;">
+          ℹ️ Unmonitored Channels: <span id="unmonitoredList" style="color: var(--text-main); font-weight: 600;">Invasive Arterial Line (ABP)</span>
         </div>
 
         <div class="panel-header" style="margin-top: 8px;">
@@ -631,24 +636,30 @@
           <!-- Factors rendered dynamically -->
         </div>
 
-        <!-- OPTIONAL RESEARCH DIAGNOSTICS -->
-        <details class="research-accordion" style="margin-top: 12px;">
-          <summary>Research / Model Diagnostics</summary>
-          <div style="margin-top: 8px; display: flex; justify-content: space-between;">
-            <span>Clinical Sub-Score: <strong id="diagClinScore">34.0</strong></span>
-            <span>Waveform Sub-Score: <strong id="diagWaveScore">31.2</strong></span>
+        <!-- OPTIONAL RESEARCH DIAGNOSTICS & ABOUT -->
+        <details class="research-accordion">
+          <summary>Research / Model Diagnostics & About</summary>
+          <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; justify-content: space-between;">
+              <span>Clinical Sub-Score: <strong id="diagClinScore">34.0</strong></span>
+              <span>Waveform Sub-Score: <strong id="diagWaveScore">31.2</strong></span>
+            </div>
+            <div style="font-size: 11px; line-height: 1.4; color: var(--text-muted); border-top: 1px solid var(--panel-border); padding-top: 8px;">
+              <strong>CareMind Research Note:</strong> This decision-support system performs physiological risk fusion using real MIMIC-IV waveform & clinical data to assist ICU clinicians in patient prioritization.
+            </div>
           </div>
         </details>
       </div>
     </div>
   </div>
 
-  <!-- DISCLAIMER -->
-  <footer>
-    <strong>CLINICAL DISCLAIMER:</strong> CareMind provides multimodal physiological risk scoring to assist ICU clinicians in patient prioritization. It is a decision-support demonstration tool, NOT a replacement for clinical judgment or a mortality predictor.
-  </footer>
-
   <script>
+    // Helper function to format window label cleanly
+    function formatWindowLabel(winIdx) {
+      const mins = String(winIdx * 15).padStart(2, '0');
+      return `Window ${winIdx + 1} • T+00:${mins}`;
+    }
+
     // State
     let currentWindowIdx = 0;
     let totalWindows = 4;
@@ -676,6 +687,8 @@
     const boxEcg = document.getElementById('boxEcg');
     const boxPpg = document.getElementById('boxPpg');
     const boxAbp = document.getElementById('boxAbp');
+    const unmonitoredBanner = document.getElementById('unmonitoredBanner');
+    const unmonitoredList = document.getElementById('unmonitoredList');
 
     const valHR = document.getElementById('valHR');
     const valSpO2 = document.getElementById('valSpO2');
@@ -701,9 +714,8 @@
         const resp = await fetch(`/api/multimodal/patients?window_index=${currentWindowIdx}`);
         const data = await resp.json();
         renderPatientsOverview(data.patients || []);
-        if (data.patients && data.patients.length > 0) {
-          overviewTimeTag.innerText = data.patients[0].timestamp || '2148-08-16 09:00:00';
-        }
+        const wLabel = formatWindowLabel(currentWindowIdx);
+        overviewTimeTag.innerText = data.patients && data.patients.length > 0 ? (data.patients[0].timestamp || wLabel) : wLabel;
       } catch (err) {
         console.error('Error loading ICU overview:', err);
       }
@@ -711,7 +723,7 @@
 
     function renderPatientsOverview(patients) {
       patientsListContainer.innerHTML = '';
-      windowIndicator.innerText = `Window ${currentWindowIdx + 1} / 4`;
+      windowIndicator.innerText = formatWindowLabel(currentWindowIdx);
 
       patients.forEach(p => {
         const borderClass = p.risk_category === 'HIGH' ? 'border-high' : (p.risk_category === 'MEDIUM' ? 'border-med' : 'border-low');
@@ -765,8 +777,9 @@
     }
 
     function renderPatientDetail(data) {
-      windowIndicator.innerText = `Window ${data.window_index + 1} / 4`;
-      detailTimeTag.innerText = data.timestamp || '2148-08-16 09:00:00';
+      const wLabel = formatWindowLabel(data.window_index || currentWindowIdx);
+      windowIndicator.innerText = wLabel;
+      detailTimeTag.innerText = data.timestamp || wLabel;
       detailPatientTitle.innerText = `Patient #${data.subject_id} (Record ${data.record_id})`;
 
       const score = Math.round(data.risk_score || 0);
@@ -819,11 +832,31 @@
       diagClinScore.innerText = (data.clinical_score || 0).toFixed(1);
       diagWaveScore.innerText = (data.waveform_score || 0).toFixed(1);
 
-      // Render Waveforms
+      // Clean signal handling: Hide empty boxes for unmonitored channels
       const samples = data.waveform_samples || {};
-      drawWaveform(ecgCtx, samples.ecg || [], 'var(--ecg-color)');
-      drawWaveform(ppgCtx, samples.ppg || [], 'var(--ppg-color)');
-      drawWaveform(abpCtx, samples.abp || [], 'var(--abp-color)');
+      const hasEcg = samples.ecg && samples.ecg.length > 0;
+      const hasPpg = samples.ppg && samples.ppg.length > 0;
+      const hasAbp = samples.abp && samples.abp.length > 0;
+
+      boxEcg.style.display = hasEcg ? 'block' : 'none';
+      boxPpg.style.display = hasPpg ? 'block' : 'none';
+      boxAbp.style.display = hasAbp ? 'block' : 'none';
+
+      const unmonitored = [];
+      if (!hasEcg) unmonitored.push('ECG');
+      if (!hasPpg) unmonitored.push('PPG');
+      if (!hasAbp) unmonitored.push('Invasive Arterial Line (ABP)');
+
+      if (unmonitored.length > 0) {
+        unmonitoredBanner.style.display = 'flex';
+        unmonitoredList.innerText = unmonitored.join(', ');
+      } else {
+        unmonitoredBanner.style.display = 'none';
+      }
+
+      if (hasEcg) drawWaveform(ecgCtx, samples.ecg, 'var(--ecg-color)');
+      if (hasPpg) drawWaveform(ppgCtx, samples.ppg, 'var(--ppg-color)');
+      if (hasAbp) drawWaveform(abpCtx, samples.abp, 'var(--abp-color)');
     }
 
     function drawWaveform(ctx, signal, color) {
@@ -832,12 +865,7 @@
       cvs.height = cvs.clientHeight;
 
       ctx.clearRect(0, 0, cvs.width, cvs.height);
-      if (!signal || signal.length === 0) {
-        ctx.fillStyle = 'rgba(255,255,255,0.2)';
-        ctx.font = '12px Inter';
-        ctx.fillText('Channel Not Available', 20, cvs.height / 2);
-        return;
-      }
+      if (!signal || signal.length === 0) return;
 
       ctx.beginPath();
       ctx.strokeStyle = color;

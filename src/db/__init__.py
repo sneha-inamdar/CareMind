@@ -1,0 +1,3 @@
+"""
+CareMind Database Layer Package.
+"""
