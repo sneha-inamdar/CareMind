@@ -3,692 +3,1573 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CareMind — Multimodal ICU Clinical Decision Support System</title>
+  <title>CareMind — ICU Command Center & Multimodal Clinical Intelligence</title>
+  
+  <!-- Modern Typography from Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
   <style>
+    /* ==========================================================================
+       CAREMIND HEALTHCARE SAAS DESIGN SYSTEM
+       Clean, trustworthy, presentation-ready clinical intelligence interface.
+       ========================================================================== */
     :root {
-      --bg-dark: #090d16;
-      --panel-bg: rgba(16, 24, 40, 0.75);
-      --panel-border: rgba(255, 255, 255, 0.08);
-      --accent-cyan: #00f2fe;
-      --accent-blue: #4facfe;
-      --accent-purple: #7f00ff;
-      --text-main: #f1f5f9;
-      --text-muted: #94a3b8;
+      /* Base & Surfaces */
+      --bg-app: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-subtle: #f1f5f9;
+      --bg-subtle-hover: #e2e8f0;
       
-      --risk-low: #10b981;
-      --risk-med: #f59e0b;
-      --risk-high: #ef4444;
+      /* Typography Colors */
+      --text-main: #0f172a;
+      --text-secondary: #334155;
+      --text-muted: #64748b;
+      --text-light: #94a3b8;
       
-      --ecg-color: #10b981;
-      --ppg-color: #06b6d4;
-      --abp-color: #f43f5e;
+      /* Borders & Dividers */
+      --border-color: #e2e8f0;
+      --border-strong: #cbd5e1;
+      
+      /* Brand Accents */
+      --brand-blue: #2563eb;
+      --brand-blue-hover: #1d4ed8;
+      --brand-blue-soft: #eff6ff;
+      --brand-indigo: #4f46e5;
+      --brand-indigo-soft: #eef2ff;
+      
+      /* Restrained Priority & Status Colors */
+      --critical-bg: #fef2f2;
+      --critical-border: #fca5a5;
+      --critical-text: #991b1b;
+      --critical-badge: #dc2626;
+      
+      --high-bg: #fffbe6;
+      --high-border: #fde68a;
+      --high-text: #92400e;
+      --high-badge: #d97706;
+      
+      --routine-bg: #f0fdf4;
+      --routine-border: #bbf7d0;
+      --routine-text: #166534;
+      --routine-badge: #16a34a;
+      
+      --info-bg: #f0f9ff;
+      --info-border: #bae6fd;
+      --info-text: #075985;
+      
+      /* Waveform Signal Colors */
+      --ecg-line: #059669;
+      --ppg-line: #0284c7;
+      --abp-line: #e11d48;
+      
+      /* Shadows */
+      --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.07);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+      
+      /* Transitions */
+      --transition-fast: 0.15s ease;
+      --transition-normal: 0.25s ease;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
-      background: var(--bg-dark);
-      background-image: 
-        radial-gradient(at 0% 0%, rgba(79, 172, 254, 0.1) 0px, transparent 50%),
-        radial-gradient(at 100% 100%, rgba(127, 0, 255, 0.1) 0px, transparent 50%);
+      background-color: var(--bg-app);
       color: var(--text-main);
-      font-family: 'Inter', -apple-system, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
       min-height: 100vh;
-      padding: 24px;
       display: flex;
       flex-direction: column;
-      gap: 20px;
     }
 
-    /* HEADER */
-    header {
-      background: var(--panel-bg);
-      backdrop-filter: blur(16px);
-      border: 1px solid var(--panel-border);
-      border-radius: 16px;
-      padding: 16px 24px;
+    /* TYPOGRAPHY HELPERS */
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    
+    h1, h2, h3, h4 {
+      color: var(--text-main);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    /* TOP APPLICATION NAVBAR */
+    .app-navbar {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow-xs);
+    }
+
+    .navbar-container {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 64px;
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
 
-    .brand {
+    .brand-section {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
+      text-decoration: none;
     }
 
-    .brand-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+    .brand-logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--brand-blue), var(--brand-indigo));
       display: flex;
       align-items: center;
       justify-content: center;
+      color: #ffffff;
       font-weight: 800;
-      font-size: 22px;
-      color: white;
-      box-shadow: 0 4px 20px rgba(79, 172, 254, 0.3);
-    }
-
-    .brand-title h1 {
       font-size: 20px;
-      font-weight: 700;
-      letter-spacing: -0.5px;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
     }
 
-    .brand-title p {
+    .brand-titles h1 {
+      font-size: 17px;
+      line-height: 1.2;
+    }
+
+    .brand-titles span {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* CLINICIAN PRIMARY NAVIGATION: Overview | Patients | Alerts */
+    .nav-tabs {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--bg-subtle);
+      padding: 4px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+    }
+
+    .nav-tab {
+      padding: 6px 18px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: var(--transition-fast);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .nav-tab:hover {
+      color: var(--text-main);
+    }
+
+    .nav-tab.active {
+      background: var(--bg-card);
+      color: var(--brand-blue);
+      box-shadow: var(--shadow-xs);
+    }
+
+    .nav-actions-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .sim-controls-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 4px 8px 4px 12px;
+      border-radius: 30px;
+      box-shadow: var(--shadow-xs);
+    }
+
+    .sim-status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
       font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .sim-status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--routine-badge);
+    }
+
+    .sim-status-dot.active {
+      animation: pulse-dot 1.5s infinite;
+    }
+
+    @keyframes pulse-dot {
+      0% { opacity: 0.4; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.1); }
+      100% { opacity: 0.4; transform: scale(0.9); }
+    }
+
+    .btn-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      transition: var(--transition-fast);
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      background: var(--bg-subtle);
+      color: var(--text-main);
+      border-color: var(--border-strong);
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-sm {
+      padding: 4px 10px;
+      font-size: 12px;
+      border-radius: 6px;
+    }
+
+    .btn-primary {
+      background: var(--brand-blue);
+      color: #ffffff;
+      border-color: var(--brand-blue);
+    }
+
+    .btn-primary:hover {
+      background: var(--brand-blue-hover);
+      color: #ffffff;
+      border-color: var(--brand-blue-hover);
+    }
+
+    .btn-secondary {
+      background: var(--brand-blue-soft);
+      color: var(--brand-blue);
+      border-color: rgba(37, 99, 235, 0.2);
+    }
+
+    .btn-secondary:hover {
+      background: #dbeafe;
+      color: var(--brand-blue-hover);
+    }
+
+    /* MAIN CONTENT CONTAINER */
+    .main-container {
+      max-width: 1440px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* INTERACTIVE METRICS OVERVIEW BAR */
+    .metrics-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .metric-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px 20px;
+      box-shadow: var(--shadow-xs);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: var(--transition-fast);
+      user-select: none;
+    }
+
+    .metric-card:hover {
+      box-shadow: var(--shadow-md);
+      border-color: var(--brand-blue);
+      transform: translateY(-2px);
+    }
+
+    .metric-info h4 {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .metric-value-row {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .metric-number {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1;
+    }
+
+    .metric-sub {
+      font-size: 12px;
+      font-weight: 500;
       color: var(--text-muted);
     }
 
-    .status-pill {
-      background: rgba(16, 185, 129, 0.1);
-      border: 1px solid rgba(16, 185, 129, 0.3);
-      color: var(--risk-low);
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
+    .metric-icon-badge {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .badge-blue { background: var(--brand-blue-soft); color: var(--brand-blue); }
+    .badge-red { background: var(--critical-bg); color: var(--critical-badge); }
+    .badge-amber { background: var(--high-bg); color: var(--high-badge); }
+    .badge-green { background: var(--routine-bg); color: var(--routine-badge); }
+
+    /* FILTER CONTROLS BAR ON PATIENTS TAB */
+    .filter-controls-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 24px;
+      background: var(--bg-subtle);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .filter-pills-group {
       display: flex;
       align-items: center;
       gap: 8px;
     }
 
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--risk-low);
-      box-shadow: 0 0 10px var(--risk-low);
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0% { opacity: 0.5; }
-      50% { opacity: 1; }
-      100% { opacity: 0.5; }
-    }
-
-    .controls-bar {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    button {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--panel-border);
-      color: var(--text-main);
-      padding: 8px 16px;
-      border-radius: 8px;
-      font-family: inherit;
-      font-size: 13px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    button:hover {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: rgba(255, 255, 255, 0.2);
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-      border: none;
-      font-weight: 600;
-    }
-
-    /* VIEW CONTAINERS */
-    .view-container {
-      display: none;
-      flex-direction: column;
-      gap: 20px;
-      flex: 1;
-    }
-
-    .view-active {
-      display: flex;
-    }
-
-    /* SECTION HEADER BANNER */
-    .section-banner {
-      background: var(--panel-bg);
-      border: 1px solid var(--panel-border);
-      border-radius: 12px;
-      padding: 16px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .section-banner h2 {
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--text-main);
-    }
-
-    .section-banner p {
+    .filter-pill-btn {
+      padding: 5px 12px;
+      border-radius: 20px;
       font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 2px;
+      font-weight: 600;
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: var(--transition-fast);
     }
 
-    /* MULTI-PATIENT ICU GRID */
-    .patient-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
+    .filter-pill-btn:hover {
+      border-color: var(--border-strong);
     }
 
-    .patient-card {
-      background: var(--panel-bg);
-      backdrop-filter: blur(16px);
-      border: 1px solid var(--panel-border);
-      border-radius: 16px;
-      padding: 20px;
+    .filter-pill-btn.active {
+      background: var(--brand-blue);
+      color: #ffffff;
+      border-color: var(--brand-blue);
+    }
+
+    /* DASHBOARD CONTENT GRID */
+    .dashboard-layout {
       display: grid;
-      grid-template-columns: 240px 1.2fr 1.5fr 140px;
-      align-items: center;
+      grid-template-columns: 2.3fr 1fr;
       gap: 24px;
-      cursor: pointer;
-      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+      align-items: start;
     }
 
-    .patient-card:hover {
-      transform: translateY(-2px);
-      border-color: var(--accent-blue);
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    /* SECTION CARDS */
+    .section-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      box-shadow: var(--shadow-xs);
+      overflow: hidden;
     }
 
-    .patient-card.border-high {
-      border-left: 4px solid var(--risk-high);
-    }
-    .patient-card.border-med {
-      border-left: 4px solid var(--risk-med);
-    }
-    .patient-card.border-low {
-      border-left: 4px solid var(--risk-low);
+    .section-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #fafafa;
     }
 
-    .bed-info h3 {
-      font-size: 18px;
+    .section-title-group h2 {
+      font-size: 16px;
       font-weight: 700;
-      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-main);
     }
 
-    .bed-info p {
+    .section-title-group p {
       font-size: 12px;
       color: var(--text-muted);
       margin-top: 2px;
     }
 
-    .modal-tags {
-      display: flex;
-      gap: 6px;
-      margin-top: 8px;
-    }
-
-    .modal-tag {
-      font-size: 10px;
-      font-weight: 700;
-      padding: 2px 6px;
-      border-radius: 4px;
-      background: rgba(255, 255, 255, 0.06);
-      color: var(--text-muted);
-    }
-
-    .risk-summary {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .score-badge {
-      font-size: 28px;
-      font-weight: 800;
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    .cat-badge {
-      font-size: 12px;
-      font-weight: 800;
-      padding: 4px 12px;
-      border-radius: 12px;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-    }
-
-    .cat-high { background: rgba(239, 68, 68, 0.15); color: var(--risk-high); border: 1px solid var(--risk-high); }
-    .cat-med { background: rgba(245, 158, 11, 0.15); color: var(--risk-med); border: 1px solid var(--risk-med); }
-    .cat-low { background: rgba(16, 185, 129, 0.15); color: var(--risk-low); border: 1px solid var(--risk-low); }
-
-    .vitals-strip {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      background: rgba(0, 0, 0, 0.25);
-      border-radius: 10px;
-      padding: 10px 14px;
-    }
-
-    .strip-item {
-      text-align: center;
-    }
-
-    .strip-name {
-      font-size: 10px;
-      color: var(--text-muted);
-    }
-
-    .strip-val {
-      font-size: 16px;
-      font-weight: 700;
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    .btn-inspect {
-      justify-self: end;
-    }
-
-    /* PATIENT DETAIL VIEW GRID */
-    .detail-grid {
-      display: grid;
-      grid-template-columns: 1.6fr 1fr;
-      gap: 20px;
-    }
-
-    .panel {
-      background: var(--panel-bg);
-      backdrop-filter: blur(16px);
-      border: 1px solid var(--panel-border);
-      border-radius: 16px;
-      padding: 20px;
+    /* PATIENTS LIST / CARDS GRID */
+    .patients-list {
+      padding: 20px 24px;
       display: flex;
       flex-direction: column;
       gap: 16px;
     }
 
-    .panel-header {
-      display: flex;
+    .patient-priority-card {
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 18px 20px;
+      background: var(--bg-card);
+      display: grid;
+      grid-template-columns: 210px 150px 1.4fr 150px;
       align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-      padding-bottom: 12px;
-    }
-
-    .panel-header h3 {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-    }
-
-    /* WAVEFORM BOXES */
-    .waveform-box {
-      background: rgba(0, 0, 0, 0.4);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      border-radius: 10px;
-      padding: 12px;
+      gap: 20px;
+      transition: var(--transition-fast);
+      box-shadow: var(--shadow-xs);
       position: relative;
     }
 
-    .waveform-label {
-      position: absolute;
-      top: 8px;
-      left: 12px;
-      font-size: 11px;
-      font-weight: 700;
-      font-family: 'JetBrains Mono', monospace;
+    .patient-priority-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-1px);
     }
 
-    .lbl-ecg { color: var(--ecg-color); }
-    .lbl-ppg { color: var(--ppg-color); }
-    .lbl-abp { color: var(--abp-color); }
+    /* Priority Status Accents */
+    .patient-priority-card.status-critical {
+      background-color: var(--critical-bg);
+      border-color: var(--critical-border);
+    }
 
-    canvas {
+    .patient-priority-card.status-high {
+      background-color: var(--high-bg);
+      border-color: var(--high-border);
+    }
+
+    .patient-priority-card.status-routine {
+      background-color: var(--bg-card);
+      border-color: var(--border-color);
+    }
+
+    .patient-id-block h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .patient-sub-text {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .modality-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 8px;
+    }
+
+    .chip {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(15, 23, 42, 0.05);
+      color: var(--text-secondary);
+      border: 1px solid rgba(15, 23, 42, 0.08);
+    }
+
+    /* Risk Score Badge */
+    .risk-score-box {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .score-badge-row {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+
+    .score-number {
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .priority-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      width: fit-content;
+    }
+
+    .priority-pill.pill-critical {
+      background: var(--critical-badge);
+      color: #ffffff;
+    }
+
+    .priority-pill.pill-high {
+      background: var(--high-badge);
+      color: #ffffff;
+    }
+
+    .priority-pill.pill-routine {
+      background: var(--routine-badge);
+      color: #ffffff;
+    }
+
+    .trend-indicator {
+      font-size: 11px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .trend-escalating { color: var(--critical-badge); }
+    .trend-improving { color: var(--routine-badge); }
+    .trend-stable { color: var(--text-muted); }
+
+    /* Vitals Grid inside Card */
+    .card-vitals-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      background: #ffffff;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    .vital-item {
+      text-align: center;
+    }
+
+    .vital-item-lbl {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .vital-item-val {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .vital-item-unit {
+      font-size: 9px;
+      color: var(--text-light);
+    }
+
+    .card-action-block {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+    }
+
+    .alert-counter-badge {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--critical-text);
+      background: rgba(220, 38, 38, 0.08);
+      padding: 3px 8px;
+      border-radius: 12px;
+      border: 1px solid rgba(220, 38, 38, 0.2);
+    }
+
+    /* ACTIVE ALERTS SIDEBAR PANEL */
+    .alerts-container {
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .alert-card {
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 14px 16px;
+      background: var(--bg-card);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: var(--transition-fast);
+      border-left-width: 4px;
+      cursor: pointer;
+    }
+
+    .alert-card:hover {
+      box-shadow: var(--shadow-sm);
+    }
+
+    .alert-card.sev-critical {
+      border-left-color: var(--critical-badge);
+      background: var(--critical-bg);
+    }
+
+    .alert-card.sev-high {
+      border-left-color: var(--high-badge);
+      background: var(--high-bg);
+    }
+
+    .alert-card.sev-info {
+      border-left-color: var(--brand-blue);
+      background: var(--info-bg);
+    }
+
+    .alert-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .alert-patient-tag {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .alert-sev-badge {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .alert-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .alert-evidence {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .alert-time {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* PATIENT DETAIL VIEW WORKSPACE */
+    .detail-workspace {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .detail-header-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--shadow-xs);
+    }
+
+    .detail-patient-identity {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .detail-patient-identity h2 {
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .detail-grid-layout {
+      display: grid;
+      grid-template-columns: 1.8fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    /* WAVEFORM PANEL */
+    .waveform-card-body {
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .waveform-box {
+      background: #090d16;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 12px 16px;
+      position: relative;
+    }
+
+    .waveform-meta-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .waveform-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .lbl-ecg { color: var(--ecg-line); }
+    .lbl-ppg { color: var(--ppg-line); }
+    .lbl-abp { color: var(--abp-line); }
+
+    .waveform-freq {
+      font-size: 10px;
+      color: #64748b;
+    }
+
+    canvas.waveform-canvas {
       width: 100%;
       height: 90px;
       display: block;
     }
 
-    .unmonitored-banner {
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px dashed var(--panel-border);
+    .unmonitored-badge {
+      background: var(--bg-subtle);
+      border: 1px dashed var(--border-strong);
       border-radius: 8px;
-      padding: 8px 12px;
-      font-size: 11px;
+      padding: 10px 14px;
+      font-size: 12px;
       color: var(--text-muted);
       display: flex;
       align-items: center;
       gap: 8px;
     }
 
-    /* VITALS GRID */
-    .vitals-grid {
+    /* VITALS METRIC TILES */
+    .vitals-tile-grid {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
       gap: 12px;
+      margin-top: 8px;
     }
 
-    .vital-card {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--panel-border);
+    .vital-tile {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-color);
       border-radius: 10px;
       padding: 12px;
       text-align: center;
     }
 
-    .vital-name {
+    .vital-tile-lbl {
       font-size: 11px;
+      font-weight: 600;
       color: var(--text-muted);
-      margin-bottom: 4px;
     }
 
-    .vital-val {
+    .vital-tile-val {
       font-size: 22px;
-      font-weight: 700;
-      font-family: 'JetBrains Mono', monospace;
+      font-weight: 800;
+      margin: 4px 0 2px 0;
+      color: var(--text-main);
     }
 
-    .vital-unit {
+    .vital-tile-unit {
       font-size: 10px;
       color: var(--text-muted);
     }
 
-    /* RISK SCORE CIRCLE */
-    .risk-main-box {
+    /* RISK TREND & EXPLAINABILITY CARDS */
+    .factors-list-container {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 14px;
-      border: 1px solid var(--panel-border);
+      gap: 10px;
+      padding: 18px 24px;
     }
 
-    .gauge-circle {
-      width: 140px;
-      height: 140px;
-      border-radius: 50%;
-      background: conic-gradient(var(--gauge-color, var(--risk-low)) var(--gauge-pct, 30%), rgba(255, 255, 255, 0.05) 0);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 0 30px var(--gauge-glow, rgba(16, 185, 129, 0.2));
-      transition: all 0.5s ease;
-    }
-
-    .gauge-inner {
-      width: 114px;
-      height: 114px;
-      border-radius: 50%;
-      background: var(--bg-dark);
+    .factor-card {
+      border: 1px solid var(--border-color);
+      border-left: 4px solid var(--brand-blue);
+      border-radius: 8px;
+      padding: 12px 16px;
+      background: var(--bg-card);
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      gap: 4px;
     }
 
-    .gauge-score {
-      font-size: 34px;
-      font-weight: 800;
-      font-family: 'JetBrains Mono', monospace;
-      line-height: 1;
+    .factor-card-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-main);
     }
 
-    .gauge-max {
-      font-size: 11px;
-      color: var(--text-muted);
+    .factor-card-desc {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .factor-impact-badge {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--brand-blue);
+      text-transform: uppercase;
+      align-self: flex-start;
       margin-top: 2px;
     }
 
-    /* CONTRIBUTING FACTORS */
-    .factors-list {
+    /* DATA TABLES */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+
+    .data-table th {
+      background: var(--bg-subtle);
+      color: var(--text-muted);
+      font-weight: 600;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border-color);
+      text-transform: uppercase;
+      font-size: 11px;
+    }
+
+    .data-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-main);
+    }
+
+    details.research-panel {
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 14px 18px;
+      background: var(--bg-subtle);
+      margin: 0 24px 24px 24px;
+    }
+
+    details.research-panel summary {
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--brand-indigo);
+      user-select: none;
+    }
+
+    .research-content {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-color);
       display: flex;
       flex-direction: column;
       gap: 8px;
-    }
-
-    .factor-item {
-      background: rgba(255, 255, 255, 0.02);
-      border-left: 3px solid var(--accent-blue);
-      border-radius: 0 8px 8px 0;
-      padding: 10px 12px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .factor-title {
-      font-size: 13px;
-      font-weight: 600;
-    }
-
-    .factor-desc {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-
-    /* RESEARCH ACCORDION (OPTIONAL SECONDARY SECTION) */
-    details.research-accordion {
-      background: rgba(0, 0, 0, 0.25);
-      border: 1px solid var(--panel-border);
-      border-radius: 10px;
-      padding: 12px 16px;
       font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 12px;
+      color: var(--text-secondary);
     }
-    details summary {
-      cursor: pointer;
-      font-weight: 600;
-      color: var(--accent-cyan);
+
+    .research-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+    }
+
+    /* RESPONSIVE LAYOUT BREAKPOINTS */
+    @media (max-width: 1100px) {
+      .dashboard-layout, .detail-grid-layout {
+        grid-template-columns: 1fr;
+      }
+      .metrics-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .patient-priority-card {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .navbar-container {
+        padding: 0 16px;
+        height: auto;
+        padding-top: 12px;
+        padding-bottom: 12px;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .metrics-row {
+        grid-template-columns: 1fr;
+      }
+      .patient-priority-card {
+        grid-template-columns: 1fr;
+      }
+      .vitals-tile-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
   </style>
 </head>
 <body>
 
-  <!-- TOP HEADER -->
-  <header>
-    <div class="brand">
-      <div class="brand-icon">C</div>
-      <div class="brand-title">
-        <h1>CareMind ICU Decision Support</h1>
-        <p>Continuous Multimodal Physiological Monitoring & Risk Prioritization</p>
-      </div>
-    </div>
-    
-    <div class="status-pill">
-      <div class="status-dot"></div>
-      <span>3 ICU PATIENTS MONITORED</span>
-    </div>
+  <!-- TOP APPLICATION NAVBAR -->
+  <header class="app-navbar">
+    <div class="navbar-container">
+      <a href="#" class="brand-section" id="btnLogoHome">
+        <div class="brand-logo">C</div>
+        <div class="brand-titles">
+          <h1>CareMind</h1>
+          <span>ICU Command Center</span>
+        </div>
+      </a>
 
-    <div class="controls-bar">
-      <button id="btnPrevWindow">← Prev Window</button>
-      <span id="windowIndicator" style="font-family: 'JetBrains Mono'; font-size: 13px;">Window 1 • T+00:00</span>
-      <button id="btnNextWindow">Next Window →</button>
-      <button id="btnReplay" class="btn-primary">▶ Start Live Replay</button>
+      <!-- CLINICIAN PRIMARY NAVIGATION: Overview | Patients | Alerts -->
+      <nav class="nav-tabs">
+        <button class="nav-tab active" id="tabOverview">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Overview
+        </button>
+        <button class="nav-tab" id="tabPatients">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Patients
+        </button>
+        <button class="nav-tab" id="tabAlerts">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          Alerts
+        </button>
+      </nav>
+
+      <!-- RIGHT TOOLBAR: Model Diagnostics + Live Simulation Controls -->
+      <div class="nav-actions-right">
+        <!-- SECONDARY TECHNICAL/RESEARCH LINK -->
+        <button class="btn btn-sm" id="btnModelDiagnostics" title="Access Model Diagnostics & Technical Metadata">
+          ⚙️ Model Diagnostics
+        </button>
+
+        <!-- LIVE SIMULATION TOOLBAR -->
+        <div class="sim-controls-toolbar">
+          <div class="sim-status-indicator">
+            <div class="sim-status-dot active" id="simStatusDot"></div>
+            <span id="simStatusText">LIVE SIMULATION</span>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-sm btn-primary" id="btnToggleSim">⏸ Pause</button>
+            <button class="btn btn-sm" id="btnStepSim" title="Advance 1 step">⏭ Step</button>
+            <button class="btn btn-sm" id="btnResetSim" title="Reset simulation">🔄 Reset</button>
+          </div>
+        </div>
+      </div>
     </div>
   </header>
 
-  <!-- VIEW 1: MULTI-PATIENT ICU OVERVIEW (MAIN SCREEN) -->
-  <div id="overviewView" class="view-container view-active">
-    <div class="section-banner">
-      <div>
-        <h2>ICU Patient Prioritization Dashboard</h2>
-        <p>Patients automatically prioritized by CareMind physiological risk score (highest risk first). Select any patient to inspect detailed signals.</p>
+  <!-- MAIN APPLICATION CONTENT -->
+  <main class="main-container">
+
+    <!-- INTERACTIVE SUMMARY CARDS BANNER -->
+    <section class="metrics-row" id="metricsBanner">
+      
+      <!-- CARD 1: MONITORED PATIENTS -> NAVIGATES TO PATIENTS TAB -->
+      <div class="metric-card" id="cardMonitoredPatients" title="Click to view all monitored patients">
+        <div class="metric-info">
+          <h4>Monitored Patients</h4>
+          <div class="metric-value-row">
+            <span class="metric-number" id="metricTotalPatients">3</span>
+            <span class="metric-sub">Active ICU beds</span>
+          </div>
+        </div>
+        <div class="metric-icon-badge badge-blue">🏥</div>
       </div>
-      <span style="font-family: 'JetBrains Mono'; font-size: 12px; color: var(--accent-cyan);" id="overviewTimeTag">Window 1 • T+00:00</span>
+
+      <!-- CARD 2: CRITICAL PATIENTS -> NAVIGATES TO PATIENTS TAB FILTERED TO CRITICAL -->
+      <div class="metric-card" id="cardCriticalPatients" title="Click to filter to Critical patients">
+        <div class="metric-info">
+          <h4>Critical Patients</h4>
+          <div class="metric-value-row">
+            <span class="metric-number" id="metricCriticalCount" style="color: var(--critical-badge);">1</span>
+            <span class="metric-sub">Immediate attention</span>
+          </div>
+        </div>
+        <div class="metric-icon-badge badge-red">⚠️</div>
+      </div>
+
+      <!-- CARD 3: HIGH PRIORITY PATIENTS -> NAVIGATES TO PATIENTS TAB FILTERED TO HIGH PRIORITY -->
+      <div class="metric-card" id="cardHighPriority" title="Click to filter to High Priority patients">
+        <div class="metric-info">
+          <h4>High Priority</h4>
+          <div class="metric-value-row">
+            <span class="metric-number" id="metricHighCount" style="color: var(--high-badge);">1</span>
+            <span class="metric-sub">Close monitoring</span>
+          </div>
+        </div>
+        <div class="metric-icon-badge badge-amber">⚡</div>
+      </div>
+
+      <!-- CARD 4: ACTIVE ALERTS -> NAVIGATES TO ALERTS TAB -->
+      <div class="metric-card" id="cardActiveAlerts" title="Click to view Active Alerts Log">
+        <div class="metric-info">
+          <h4>Active Alerts</h4>
+          <div class="metric-value-row">
+            <span class="metric-number" id="metricAlertsCount">2</span>
+            <span class="metric-sub">Clinical triggers</span>
+          </div>
+        </div>
+        <div class="metric-icon-badge badge-green">🔔</div>
+      </div>
+
+    </section>
+
+    <!-- VIEW 1: ICU COMMAND CENTER OVERVIEW (DEFAULT TAB) -->
+    <div id="viewOverview" class="dashboard-layout">
+      
+      <!-- LEFT MAIN: PATIENTS REQUIRING ATTENTION -->
+      <section class="section-card">
+        <div class="section-header">
+          <div class="section-title-group">
+            <h2>Patient Priority</h2>
+            <p>Automatically ranked by CareMind physiological risk score (highest risk first).</p>
+          </div>
+          <span style="font-size: 12px; color: var(--brand-blue); font-weight: 600;" id="simLiveBannerTag">Live Simulation Replay • Auto-updating</span>
+        </div>
+
+        <div class="patients-list" id="patientsContainer">
+          <!-- Dynamically populated patient priority cards -->
+        </div>
+      </section>
+
+      <!-- RIGHT SIDEBAR: ACTIVE ALERTS -->
+      <section class="section-card">
+        <div class="section-header">
+          <div class="section-title-group">
+            <h2>Active Clinical Alerts</h2>
+            <p>Real-time physiological risk events</p>
+          </div>
+        </div>
+
+        <div class="alerts-container" id="alertsSidebarContainer">
+          <!-- Dynamically populated alert cards -->
+        </div>
+      </section>
+
     </div>
 
-    <div class="patient-grid" id="patientsListContainer">
-      <!-- Patient Cards Rendered Dynamically -->
-    </div>
-  </div>
+    <!-- VIEW 2: DEDICATED PATIENTS DIRECTORY VIEW TAB (WITH FILTER CONTROLS) -->
+    <div id="viewPatients" class="section-card" style="display: none;">
+      
+      <div class="section-header">
+        <div class="section-title-group">
+          <h2>ICU Monitored Patient Roster</h2>
+          <p id="patientsSubtitleTag">Showing all active MIMIC ICU beds sorted by risk priority.</p>
+        </div>
+        
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <!-- DEFERRED ADD PATIENT ARCHITECTURAL PLACEHOLDER -->
+          <button class="btn btn-sm" disabled title="Enterprise EMR integration required for live bed addition">+ Add Patient</button>
+          <span class="font-mono" style="font-size: 12px; color: var(--text-muted);" id="patientsRosterCountTag">3 Active Patients</span>
+        </div>
+      </div>
 
-  <!-- VIEW 2: PATIENT DETAIL VIEW -->
-  <div id="detailView" class="view-container">
-    <div class="section-banner">
-      <div style="display: flex; align-items: center; gap: 16px;">
-        <button id="btnBackToOverview">← Back to ICU Overview</button>
+      <!-- INTERACTIVE FILTER BAR -->
+      <div class="filter-controls-bar">
+        <div class="filter-pills-group">
+          <span style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Priority Filter:</span>
+          <button class="filter-pill-btn active" id="filterAllBtn">All Patients (3)</button>
+          <button class="filter-pill-btn" id="filterCritBtn">Critical Only</button>
+          <button class="filter-pill-btn" id="filterHighBtn">High Priority</button>
+          <button class="filter-pill-btn" id="filterRoutineBtn">Routine</button>
+        </div>
+
+        <button class="btn btn-sm" id="btnClearPatientFilter" style="display: none;">Reset Filter</button>
+      </div>
+
+      <div class="patients-list" id="patientsDirectoryContainer">
+        <!-- Dynamically rendered full patient cards -->
+      </div>
+    </div>
+
+    <!-- VIEW 3: DEDICATED ALERTS LOG VIEW TAB -->
+    <div id="viewAlerts" class="section-card" style="display: none;">
+      <div class="section-header">
+        <div class="section-title-group">
+          <h2>Clinical Alerts Log & Rationale</h2>
+          <p>Evidence-grounded physiological alert events and state-based deduplication.</p>
+        </div>
+        <span class="font-mono" style="font-size: 12px; color: var(--text-muted);" id="alertsViewCountTag">2 Active Alerts</span>
+      </div>
+
+      <div style="padding: 20px 24px;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Severity</th>
+              <th>Patient</th>
+              <th>Bed</th>
+              <th>Alert Type</th>
+              <th>Clinical Rationale & Evidence</th>
+              <th>Timestamp</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="alertsTableBody">
+            <!-- Dynamically populated alert rows -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- VIEW 4: SECONDARY RESEARCH & MODEL DIAGNOSTICS VIEW -->
+    <div id="viewResearch" style="display: none; flex-direction: column; gap: 24px;">
+      
+      <!-- RESEARCH HEADER CARD WITH BACK BUTTON -->
+      <div class="detail-header-card">
         <div>
-          <h2 id="detailPatientTitle">Patient #10126957 (Bed ICU-03)</h2>
-          <p id="detailPatientSubtitle">CareMind Physiological Monitoring & Signal Analysis</p>
+          <h2>CareMind Research & Technical Model Diagnostics</h2>
+          <p class="patient-sub-text">Continuous signal processing, temperature-scaled late fusion, & simulation metadata</p>
+        </div>
+        <button class="btn btn-secondary" id="btnBackFromResearch">← Back to Overview</button>
+      </div>
+
+      <!-- MODEL ARCHITECTURE SUMMARY -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title-group">
+            <h2>CareMind Multimodal AI Engine Architecture</h2>
+            <p>Temperature-Scaled Calibrated Fusion Model & Instability Index</p>
+          </div>
+        </div>
+        <div style="padding: 20px 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+          <div style="background: var(--bg-subtle); padding: 16px; border-radius: 10px; border: 1px solid var(--border-color);">
+            <h4 style="font-size: 13px; color: var(--brand-indigo);">1. Modality Encoders</h4>
+            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 6px;">
+              Clinical vitals and continuous waveform signal streams (ECG, PPG, ABP) are standardized via <code>StandardScaler</code> and mapped to calibrated logit representations using <code>LogisticRegression(C=1.0)</code> models.
+            </p>
+          </div>
+
+          <div style="background: var(--bg-subtle); padding: 16px; border-radius: 10px; border: 1px solid var(--border-color);">
+            <h4 style="font-size: 13px; color: var(--brand-indigo);">2. Temperature Logit Calibration</h4>
+            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 6px;">
+              Raw decision function logits are calibrated with temperature dispersion ($T=1.75$) to expand the score dynamic range and prevent flat-line score saturation at 100.
+            </p>
+          </div>
+
+          <div style="background: var(--bg-subtle); padding: 16px; border-radius: 10px; border: 1px solid var(--border-color);">
+            <h4 style="font-size: 13px; color: var(--brand-indigo);">3. Instability Index & Priority</h4>
+            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 6px;">
+              Risk scores range continuously from 0 to 100 as a physiological instability index. Thresholds: &lt;50 (Routine), 50–&lt;75 (High Priority), &ge;75 (Critical Priority).
+            </p>
+          </div>
         </div>
       </div>
-      <div class="cat-badge cat-high" id="detailHeaderBadge">HIGH RISK</div>
+
+      <!-- REPLAY & SIMULATION METADATA PANEL -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title-group">
+            <h2>Simulation Engine & Data Provenance</h2>
+            <p>MIMIC-IV Waveform Database (mimic4wdb/0.1.0) replay execution details</p>
+          </div>
+        </div>
+        <div style="padding: 20px 24px;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Parameter</th>
+                <th>Current Value</th>
+                <th>Technical Context</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Replay Engine Status</strong></td>
+                <td><span class="priority-pill pill-routine">ACTIVE REPLAY</span></td>
+                <td>Continuous time-series window iteration</td>
+              </tr>
+              <tr>
+                <td><strong>Current Simulation Step</strong></td>
+                <td class="font-mono" id="researchSimStepVal">Step 1 of 4</td>
+                <td>15-minute evaluation windows</td>
+              </tr>
+              <tr>
+                <td><strong>MIMIC Cohort Size</strong></td>
+                <td class="font-mono">3 Monitored Patients</td>
+                <td>Genuine PhysioNet MIMIC-IV waveform records</td>
+              </tr>
+              <tr>
+                <td><strong>Waveform Sampling Frequencies</strong></td>
+                <td class="font-mono">62.5 Hz / 125.0 Hz</td>
+                <td>Resampled continuous ECG & PPG signals</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- LIVE MODEL DIAGNOSTICS ROSTER TABLE -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title-group">
+            <h2>Live Patient Model Diagnostics</h2>
+            <p>Modality sub-scores and composite risk fusion calculations</p>
+          </div>
+        </div>
+        <div style="padding: 20px 24px;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Bed ID</th>
+                <th>Subject ID</th>
+                <th>Record ID</th>
+                <th>Clinical Sub-Score</th>
+                <th>Waveform Sub-Score</th>
+                <th>Fused Risk Score</th>
+                <th>Priority Status</th>
+              </tr>
+            </thead>
+            <tbody id="researchDiagnosticsTableBody">
+              <!-- Dynamically populated diagnostics rows -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
 
-    <div class="detail-grid">
-      <!-- LEFT COLUMN: WAVEFORMS & VITALS -->
-      <div class="panel">
-        <div class="panel-header">
-          <h3>Continuous Waveform Signals</h3>
-          <span id="detailTimeTag" style="font-family: 'JetBrains Mono'; font-size: 12px; color: var(--accent-cyan);">Window 1 • T+00:00</span>
-        </div>
-
-        <div class="waveform-box" id="boxEcg">
-          <div class="waveform-label lbl-ecg">ECG LEAD II (62.5 Hz)</div>
-          <canvas id="ecgCanvas"></canvas>
-        </div>
-
-        <div class="waveform-box" id="boxPpg">
-          <div class="waveform-label lbl-ppg">PPG / PLETH PULSE (62.5 Hz)</div>
-          <canvas id="ppgCanvas"></canvas>
-        </div>
-
-        <div class="waveform-box" id="boxAbp">
-          <div class="waveform-label lbl-abp">ARTERIAL LINE ABP (mmHg)</div>
-          <canvas id="abpCanvas"></canvas>
-        </div>
-
-        <div class="unmonitored-banner" id="unmonitoredBanner" style="display: none;">
-          ℹ️ Unmonitored Channels: <span id="unmonitoredList" style="color: var(--text-main); font-weight: 600;">Invasive Arterial Line (ABP)</span>
-        </div>
-
-        <div class="panel-header" style="margin-top: 8px;">
-          <h3>Observed Bedside Vitals</h3>
-        </div>
-
-        <div class="vitals-grid">
-          <div class="vital-card">
-            <div class="vital-name">HEART RATE</div>
-            <div class="vital-val" id="valHR" style="color: var(--ecg-color);">88</div>
-            <div class="vital-unit">BPM</div>
+    <!-- VIEW 5: PATIENT DETAIL INSPECTION WORKSPACE -->
+    <div id="viewDetail" class="detail-workspace" style="display: none;">
+      
+      <!-- DETAIL WORKSPACE HEADER CARD -->
+      <div class="detail-header-card">
+        <div class="detail-patient-identity">
+          <button class="btn btn-secondary" id="btnBackToOverview">← Back</button>
+          <div>
+            <h2 id="detailPatientTitle">Patient #10020306 (Bed ICU-02)</h2>
+            <p class="patient-sub-text" id="detailPatientSubtitle">Stay #32104598 • Continuous Waveform & Bedside Vitals</p>
           </div>
+        </div>
 
-          <div class="vital-card">
-            <div class="vital-name">SpO2</div>
-            <div class="vital-val" id="valSpO2" style="color: var(--ppg-color);">97</div>
-            <div class="vital-unit">%</div>
-          </div>
-
-          <div class="vital-card">
-            <div class="vital-name">RESP RATE</div>
-            <div class="vital-val" id="valResp">18</div>
-            <div class="vital-unit">BPM</div>
-          </div>
-
-          <div class="vital-card">
-            <div class="vital-name">BLOOD PRESS</div>
-            <div class="vital-val" id="valBP" style="color: var(--abp-color); font-size: 18px;">124/78</div>
-            <div class="vital-unit">mmHg</div>
-          </div>
-
-          <div class="vital-card">
-            <div class="vital-name">MAP</div>
-            <div class="vital-val" id="valMAP">93</div>
-            <div class="vital-unit">mmHg</div>
-          </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div class="priority-pill pill-critical" id="detailPriorityBadge">CRITICAL PRIORITY</div>
+          <span class="font-mono" style="font-size: 12px; color: var(--text-muted);" id="detailTimestampTag">Window 1 • T+00:00</span>
         </div>
       </div>
 
-      <!-- RIGHT COLUMN: RISK SCORE & FACTORS -->
-      <div class="panel">
-        <div class="panel-header">
-          <h3>CareMind Risk Score</h3>
-        </div>
+      <!-- DETAIL CONTENT GRID -->
+      <div class="detail-grid-layout">
+        
+        <!-- LEFT COLUMN: WAVEFORMS & VITALS -->
+        <div style="display: flex; flex-direction: column; gap: 24px;">
+          
+          <!-- WAVEFORMS CARD -->
+          <div class="section-card">
+            <div class="section-header">
+              <div class="section-title-group">
+                <h2>Continuous Waveform Monitoring</h2>
+                <p>Real-time MIMIC continuous physiological signal traces</p>
+              </div>
+            </div>
 
-        <div class="risk-main-box">
-          <div class="gauge-circle" id="gaugeCircle">
-            <div class="gauge-inner">
-              <div class="gauge-score" id="gaugeScore">84</div>
-              <div class="gauge-max">/ 100</div>
+            <div class="waveform-card-body">
+              
+              <!-- ECG CHANNEL -->
+              <div class="waveform-box" id="boxEcg">
+                <div class="waveform-meta-header">
+                  <span class="waveform-title lbl-ecg">ECG LEAD II</span>
+                  <span class="waveform-freq">62.5 Hz Continuous</span>
+                </div>
+                <canvas id="ecgCanvas" class="waveform-canvas"></canvas>
+              </div>
+
+              <!-- PPG CHANNEL -->
+              <div class="waveform-box" id="boxPpg">
+                <div class="waveform-meta-header">
+                  <span class="waveform-title lbl-ppg">PLETH / PPG PULSE WAVE</span>
+                  <span class="waveform-freq">62.5 Hz Continuous</span>
+                </div>
+                <canvas id="ppgCanvas" class="waveform-canvas"></canvas>
+              </div>
+
+              <!-- ABP CHANNEL -->
+              <div class="waveform-box" id="boxAbp">
+                <div class="waveform-meta-header">
+                  <span class="waveform-title lbl-abp">ARTERIAL LINE ABP</span>
+                  <span class="waveform-freq">Continuous mmHg</span>
+                </div>
+                <canvas id="abpCanvas" class="waveform-canvas"></canvas>
+              </div>
+
+              <!-- UNMONITORED CHANNELS BANNER -->
+              <div class="unmonitored-badge" id="unmonitoredBanner" style="display: none;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <span>Unmonitored Signals: <strong id="unmonitoredListText" style="color: var(--text-main);">ABP</strong></span>
+              </div>
+
             </div>
           </div>
 
-          <div class="cat-badge cat-high" id="riskBadge" style="margin-top: 16px;">HIGH RISK</div>
-        </div>
-
-        <div class="panel-header">
-          <h3>Contributing Physiological Factors</h3>
-        </div>
-
-        <div class="factors-list" id="factorsContainer">
-          <!-- Factors rendered dynamically -->
-        </div>
-
-        <!-- OPTIONAL RESEARCH DIAGNOSTICS & ABOUT -->
-        <details class="research-accordion">
-          <summary>Research / Model Diagnostics & About</summary>
-          <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
-            <div style="display: flex; justify-content: space-between;">
-              <span>Clinical Sub-Score: <strong id="diagClinScore">34.0</strong></span>
-              <span>Waveform Sub-Score: <strong id="diagWaveScore">31.2</strong></span>
+          <!-- OBSERVED BEDSIDE VITALS GRID -->
+          <div class="section-card">
+            <div class="section-header">
+              <div class="section-title-group">
+                <h2>Observed Bedside Vitals</h2>
+                <p>Genuine clinical observations from bed monitor</p>
+              </div>
             </div>
-            <div style="font-size: 11px; line-height: 1.4; color: var(--text-muted); border-top: 1px solid var(--panel-border); padding-top: 8px;">
-              <strong>CareMind Research Note:</strong> This decision-support system performs physiological risk fusion using real MIMIC-IV waveform & clinical data to assist ICU clinicians in patient prioritization.
+
+            <div style="padding: 20px 24px;">
+              <div class="vitals-tile-grid">
+                <div class="vital-tile">
+                  <div class="vital-tile-lbl">HEART RATE</div>
+                  <div class="vital-tile-val font-mono" id="valHR" style="color: var(--ecg-line);">104</div>
+                  <div class="vital-tile-unit">bpm</div>
+                </div>
+
+                <div class="vital-tile">
+                  <div class="vital-tile-lbl">SpO₂</div>
+                  <div class="vital-tile-val font-mono" id="valSpO2" style="color: var(--ppg-line);">96</div>
+                  <div class="vital-tile-unit">%</div>
+                </div>
+
+                <div class="vital-tile">
+                  <div class="vital-tile-lbl">RESP RATE</div>
+                  <div class="vital-tile-val font-mono" id="valResp">18</div>
+                  <div class="vital-tile-unit">/min</div>
+                </div>
+
+                <div class="vital-tile">
+                  <div class="vital-tile-lbl">BLOOD PRESS</div>
+                  <div class="vital-tile-val font-mono" id="valBP" style="font-size: 17px; color: var(--abp-line);">132/84</div>
+                  <div class="vital-tile-unit">mmHg</div>
+                </div>
+
+                <div class="vital-tile">
+                  <div class="vital-tile-lbl">MAP</div>
+                  <div class="vital-tile-val font-mono" id="valMAP">96</div>
+                  <div class="vital-tile-unit">mmHg</div>
+                </div>
+              </div>
             </div>
           </div>
-        </details>
+
+        </div>
+
+        <!-- RIGHT COLUMN: RISK SCORE, TREND & EXPLAINABILITY -->
+        <div style="display: flex; flex-direction: column; gap: 24px;">
+          
+          <!-- RISK SUMMARY CARD -->
+          <div class="section-card">
+            <div class="section-header">
+              <div class="section-title-group">
+                <h2>Physiological Risk Score</h2>
+                <p>CareMind multimodal fusion risk metric</p>
+              </div>
+            </div>
+
+            <div style="padding: 24px; display: flex; flex-direction: column; align-items: center; text-align: center;">
+              <div style="display: flex; align-items: baseline; gap: 4px;">
+                <span class="font-mono" id="detailRiskScoreVal" style="font-size: 54px; font-weight: 800; color: var(--critical-badge); line-height: 1;">89.4</span>
+                <span style="font-size: 16px; color: var(--text-muted); font-weight: 600;">/ 100</span>
+              </div>
+              
+              <div class="priority-pill pill-critical" id="detailRiskCatPill" style="margin-top: 8px;">CRITICAL RISK</div>
+              
+              <div class="trend-indicator trend-escalating" id="detailTrendText" style="margin-top: 12px; font-size: 13px;">
+                ↑ ESCALATING (+8.4 vs prev window)
+              </div>
+            </div>
+          </div>
+
+          <!-- STRUCTURED EXPLAINABILITY FACTOR CARDS -->
+          <div class="section-card">
+            <div class="section-header">
+              <div class="section-title-group">
+                <h2>Why is this patient prioritized?</h2>
+                <p>Structured physiological contributing factors</p>
+              </div>
+            </div>
+
+            <div class="factors-list-container" id="factorsContainer">
+              <!-- Dynamically rendered factor cards -->
+            </div>
+          </div>
+
+          <!-- COLLAPSIBLE RESEARCH / MODEL DIAGNOSTICS -->
+          <details class="research-panel">
+            <summary>Research / Model Diagnostics</summary>
+            <div class="research-content">
+              <div class="research-row">
+                <span>Clinical Sub-Score:</span>
+                <strong id="diagClinicalScore">84.2</strong>
+              </div>
+              <div class="research-row">
+                <span>Waveform Sub-Score:</span>
+                <strong id="diagWaveformScore">78.0</strong>
+              </div>
+              <div class="research-row">
+                <span>Record ID:</span>
+                <span class="font-mono" id="diagRecordId">10020306</span>
+              </div>
+              <div class="research-row">
+                <span>Fusion Strategy:</span>
+                <span>Adaptive Late Fusion</span>
+              </div>
+              <p style="font-size: 11px; color: var(--text-muted); margin-top: 6px; line-height: 1.4;">
+                * Technical model sub-scores are reserved for research diagnostics and model evaluation. Clinician workflows rely strictly on total CareMind physiological risk and structured clinical explainability.
+              </p>
+            </div>
+          </details>
+
+        </div>
+
       </div>
+
     </div>
-  </div>
 
+  </main>
+
+  <!-- JAVASCRIPT APPLICATION CONTROLLER -->
   <script>
-    // Helper function to format window label cleanly
-    function formatWindowLabel(winIdx) {
-      const mins = String(winIdx * 15).padStart(2, '0');
-      return `Window ${winIdx + 1} • T+00:${mins}`;
-    }
+    // State Management
+    let simState = null;
+    let isAutoPlaying = true;
+    let autoPlayInterval = null;
+    let currentDetailRecordId = null;
+    let currentPatientFilter = 'ALL'; // 'ALL', 'CRITICAL', 'HIGH', 'ROUTINE'
+    let lastActiveTab = 'overview';
 
-    // State
-    let currentWindowIdx = 0;
-    let totalWindows = 4;
-    let isReplaying = false;
-    let replayTimer = null;
-    let currentPatientRecordId = '82924339'; // Default detail view record
-    let activeView = 'overview'; // 'overview' or 'detail'
+    // DOM Elements - Navigation Tabs
+    const tabOverview = document.getElementById('tabOverview');
+    const tabPatients = document.getElementById('tabPatients');
+    const tabAlerts = document.getElementById('tabAlerts');
+    const btnModelDiagnostics = document.getElementById('btnModelDiagnostics');
 
-    // Elements
-    const overviewView = document.getElementById('overviewView');
-    const detailView = document.getElementById('detailView');
-    const patientsListContainer = document.getElementById('patientsListContainer');
-    const windowIndicator = document.getElementById('windowIndicator');
-    const overviewTimeTag = document.getElementById('overviewTimeTag');
-    const detailTimeTag = document.getElementById('detailTimeTag');
+    // DOM Elements - Views
+    const viewOverview = document.getElementById('viewOverview');
+    const viewPatients = document.getElementById('viewPatients');
+    const viewAlerts = document.getElementById('viewAlerts');
+    const viewResearch = document.getElementById('viewResearch');
+    const viewDetail = document.getElementById('viewDetail');
+    const metricsBanner = document.getElementById('metricsBanner');
+    const btnBackFromResearch = document.getElementById('btnBackFromResearch');
 
-    const btnPrevWindow = document.getElementById('btnPrevWindow');
-    const btnNextWindow = document.getElementById('btnNextWindow');
-    const btnReplay = document.getElementById('btnReplay');
+    // Interactive Metric Cards
+    const cardMonitoredPatients = document.getElementById('cardMonitoredPatients');
+    const cardCriticalPatients = document.getElementById('cardCriticalPatients');
+    const cardHighPriority = document.getElementById('cardHighPriority');
+    const cardActiveAlerts = document.getElementById('cardActiveAlerts');
+
+    // Filter Elements
+    const filterAllBtn = document.getElementById('filterAllBtn');
+    const filterCritBtn = document.getElementById('filterCritBtn');
+    const filterHighBtn = document.getElementById('filterHighBtn');
+    const filterRoutineBtn = document.getElementById('filterRoutineBtn');
+    const btnClearPatientFilter = document.getElementById('btnClearPatientFilter');
+    const patientsSubtitleTag = document.getElementById('patientsSubtitleTag');
+
+    // Simulation Controls
+    const btnToggleSim = document.getElementById('btnToggleSim');
+    const btnStepSim = document.getElementById('btnStepSim');
+    const btnResetSim = document.getElementById('btnResetSim');
+    const simStatusDot = document.getElementById('simStatusDot');
+    const simStatusText = document.getElementById('simStatusText');
+
+    // Overview Metric Elements
+    const metricTotalPatients = document.getElementById('metricTotalPatients');
+    const metricCriticalCount = document.getElementById('metricCriticalCount');
+    const metricHighCount = document.getElementById('metricHighCount');
+    const metricAlertsCount = document.getElementById('metricAlertsCount');
+
+    // Containers
+    const patientsContainer = document.getElementById('patientsContainer');
+    const alertsSidebarContainer = document.getElementById('alertsSidebarContainer');
+    const patientsDirectoryContainer = document.getElementById('patientsDirectoryContainer');
+    const alertsTableBody = document.getElementById('alertsTableBody');
+    const researchDiagnosticsTableBody = document.getElementById('researchDiagnosticsTableBody');
+    const researchSimStepVal = document.getElementById('researchSimStepVal');
+    const patientsRosterCountTag = document.getElementById('patientsRosterCountTag');
+    const alertsViewCountTag = document.getElementById('alertsViewCountTag');
+
+    // Patient Detail Elements
     const btnBackToOverview = document.getElementById('btnBackToOverview');
-
+    const btnLogoHome = document.getElementById('btnLogoHome');
     const detailPatientTitle = document.getElementById('detailPatientTitle');
-    const detailHeaderBadge = document.getElementById('detailHeaderBadge');
+    const detailPatientSubtitle = document.getElementById('detailPatientSubtitle');
+    const detailPriorityBadge = document.getElementById('detailPriorityBadge');
+    const detailTimestampTag = document.getElementById('detailTimestampTag');
 
     const boxEcg = document.getElementById('boxEcg');
     const boxPpg = document.getElementById('boxPpg');
     const boxAbp = document.getElementById('boxAbp');
     const unmonitoredBanner = document.getElementById('unmonitoredBanner');
-    const unmonitoredList = document.getElementById('unmonitoredList');
+    const unmonitoredListText = document.getElementById('unmonitoredListText');
+
+    const ecgCtx = document.getElementById('ecgCanvas').getContext('2d');
+    const ppgCtx = document.getElementById('ppgCanvas').getContext('2d');
+    const abpCtx = document.getElementById('abpCanvas').getContext('2d');
 
     const valHR = document.getElementById('valHR');
     const valSpO2 = document.getElementById('valSpO2');
@@ -696,115 +1577,444 @@
     const valBP = document.getElementById('valBP');
     const valMAP = document.getElementById('valMAP');
 
-    const gaugeCircle = document.getElementById('gaugeCircle');
-    const gaugeScore = document.getElementById('gaugeScore');
-    const riskBadge = document.getElementById('riskBadge');
+    const detailRiskScoreVal = document.getElementById('detailRiskScoreVal');
+    const detailRiskCatPill = document.getElementById('detailRiskCatPill');
+    const detailTrendText = document.getElementById('detailTrendText');
     const factorsContainer = document.getElementById('factorsContainer');
 
-    const diagClinScore = document.getElementById('diagClinScore');
-    const diagWaveScore = document.getElementById('diagWaveScore');
+    const diagClinicalScore = document.getElementById('diagClinicalScore');
+    const diagWaveformScore = document.getElementById('diagWaveformScore');
+    const diagRecordId = document.getElementById('diagRecordId');
 
-    const ecgCtx = document.getElementById('ecgCanvas').getContext('2d');
-    const ppgCtx = document.getElementById('ppgCanvas').getContext('2d');
-    const abpCtx = document.getElementById('abpCanvas').getContext('2d');
+    // Navigation View Switcher
+    function showTab(tabName, patientFilter = null) {
+      if (tabName !== 'detail' && tabName !== 'research') {
+        lastActiveTab = tabName;
+      }
 
-    // Fetch multi-patient overview
-    async function loadOverviewData() {
+      [viewOverview, viewPatients, viewAlerts, viewResearch, viewDetail].forEach(v => v.style.display = 'none');
+      [tabOverview, tabPatients, tabAlerts].forEach(t => t.classList.remove('active'));
+
+      metricsBanner.style.display = (tabName === 'detail' || tabName === 'research') ? 'none' : 'grid';
+
+      if (tabName === 'overview') {
+        viewOverview.style.display = 'grid';
+        tabOverview.classList.add('active');
+      } else if (tabName === 'patients') {
+        viewPatients.style.display = 'block';
+        tabPatients.classList.add('active');
+        if (patientFilter) {
+          setPatientFilter(patientFilter);
+        }
+      } else if (tabName === 'alerts') {
+        viewAlerts.style.display = 'block';
+        tabAlerts.classList.add('active');
+      } else if (tabName === 'research') {
+        viewResearch.style.display = 'flex';
+      } else if (tabName === 'detail') {
+        viewDetail.style.display = 'flex';
+      }
+
+      renderDashboard();
+    }
+
+    tabOverview.addEventListener('click', () => showTab('overview'));
+    tabPatients.addEventListener('click', () => showTab('patients'));
+    tabAlerts.addEventListener('click', () => showTab('alerts'));
+    btnModelDiagnostics.addEventListener('click', () => showTab('research'));
+    btnBackFromResearch.addEventListener('click', () => showTab(lastActiveTab || 'overview'));
+
+    // INTERACTIVE SUMMARY CARDS CLICK HANDLERS
+    cardMonitoredPatients.addEventListener('click', () => showTab('patients', 'ALL'));
+    cardCriticalPatients.addEventListener('click', () => showTab('patients', 'CRITICAL'));
+    cardHighPriority.addEventListener('click', () => showTab('patients', 'HIGH'));
+    cardActiveAlerts.addEventListener('click', () => showTab('alerts'));
+
+    // PATIENTS TAB FILTER HANDLERS
+    function setPatientFilter(filter) {
+      currentPatientFilter = filter;
+      [filterAllBtn, filterCritBtn, filterHighBtn, filterRoutineBtn].forEach(b => b.classList.remove('active'));
+
+      if (filter === 'CRITICAL') {
+        filterCritBtn.classList.add('active');
+        btnClearPatientFilter.style.display = 'inline-flex';
+      } else if (filter === 'HIGH') {
+        filterHighBtn.classList.add('active');
+        btnClearPatientFilter.style.display = 'inline-flex';
+      } else if (filter === 'ROUTINE') {
+        filterRoutineBtn.classList.add('active');
+        btnClearPatientFilter.style.display = 'inline-flex';
+      } else {
+        filterAllBtn.classList.add('active');
+        btnClearPatientFilter.style.display = 'none';
+      }
+
+      renderDashboard();
+    }
+
+    filterAllBtn.addEventListener('click', () => setPatientFilter('ALL'));
+    filterCritBtn.addEventListener('click', () => setPatientFilter('CRITICAL'));
+    filterHighBtn.addEventListener('click', () => setPatientFilter('HIGH'));
+    filterRoutineBtn.addEventListener('click', () => setPatientFilter('ROUTINE'));
+    btnClearPatientFilter.addEventListener('click', () => setPatientFilter('ALL'));
+
+    // API Functions
+    async function fetchSimState() {
       try {
-        const resp = await fetch(`/api/multimodal/patients?window_index=${currentWindowIdx}`);
-        const data = await resp.json();
-        renderPatientsOverview(data.patients || []);
-        const wLabel = formatWindowLabel(currentWindowIdx);
-        overviewTimeTag.innerText = data.patients && data.patients.length > 0 ? (data.patients[0].timestamp || wLabel) : wLabel;
+        const res = await fetch('/api/simulation/state');
+        if (res.ok) {
+          simState = await res.json();
+          renderDashboard();
+        }
       } catch (err) {
-        console.error('Error loading ICU overview:', err);
+        console.error('Failed to fetch simulation state:', err);
       }
     }
 
-    function renderPatientsOverview(patients) {
-      patientsListContainer.innerHTML = '';
-      windowIndicator.innerText = formatWindowLabel(currentWindowIdx);
+    async function stepSimulation() {
+      try {
+        const res = await fetch('/api/simulation/step', { method: 'POST' });
+        if (res.ok) {
+          simState = await res.json();
+          renderDashboard();
+        }
+      } catch (err) {
+        console.error('Failed to step simulation:', err);
+      }
+    }
 
+    async function resetSimulation() {
+      try {
+        const res = await fetch('/api/simulation/start', { method: 'POST' });
+        if (res.ok) {
+          simState = await res.json();
+          renderDashboard();
+        }
+      } catch (err) {
+        console.error('Failed to reset simulation:', err);
+      }
+    }
+
+    // Main Render Function
+    function renderDashboard() {
+      if (!simState || !simState.patients) return;
+
+      const patients = simState.patients;
+      const alerts = simState.active_alerts || [];
+
+      // Update Header Summary Metrics
+      metricTotalPatients.innerText = patients.length;
+
+      let critCount = 0;
+      let highCount = 0;
+      let routineCount = 0;
       patients.forEach(p => {
-        const borderClass = p.risk_category === 'HIGH' ? 'border-high' : (p.risk_category === 'MEDIUM' ? 'border-med' : 'border-low');
-        const catClass = p.risk_category === 'HIGH' ? 'cat-high' : (p.risk_category === 'MEDIUM' ? 'cat-med' : 'cat-low');
+        if (p.priority_status === 'CRITICAL_PRIORITY' || p.risk_category === 'HIGH' || p.risk_score >= 75) {
+          critCount++;
+        } else if (p.priority_status === 'HIGH_PRIORITY' || p.risk_category === 'MEDIUM' || p.risk_score >= 50) {
+          highCount++;
+        } else {
+          routineCount++;
+        }
+      });
 
-        const card = document.createElement('div');
-        card.className = `patient-card ${borderClass}`;
-        card.onclick = () => openPatientDetail(p.record_id);
+      metricCriticalCount.innerText = critCount;
+      metricHighCount.innerText = highCount;
+      metricAlertsCount.innerText = alerts.length;
 
-        const v = p.vitals || {};
-        const modalities = (p.available_modalities || []).map(m => `<span class="modal-tag">${m}</span>`).join('');
+      // Update Filter Pill Labels with live counts
+      filterAllBtn.innerText = `All Patients (${patients.length})`;
+      filterCritBtn.innerText = `Critical Only (${critCount})`;
+      filterHighBtn.innerText = `High Priority (${highCount})`;
+      filterRoutineBtn.innerText = `Routine (${routineCount})`;
 
-        card.innerHTML = `
-          <div class="bed-info">
-            <h3>${p.bed_id}</h3>
-            <p>Patient #${p.subject_id} | Stay #${p.stay_id}</p>
-            <div class="modal-tags">${modalities}</div>
-          </div>
+      alertsViewCountTag.innerText = `${alerts.length} Active Alerts`;
+      researchSimStepVal.innerText = `Step ${simState.current_step + 1} of ${simState.total_steps}`;
 
-          <div class="risk-summary">
-            <div class="score-badge">${Math.round(p.risk_score)}</div>
-            <div class="cat-badge ${catClass}">${p.risk_category} RISK</div>
-          </div>
+      // Render Active Tab Content
+      renderPatientsOverview(patients);
+      renderPatientsDirectory(patients);
+      renderAlertsSidebar(alerts);
+      renderAlertsTable(alerts);
+      renderResearchDiagnostics(patients);
 
-          <div class="vitals-strip">
-            <div class="strip-item"><div class="strip-name">HR</div><div class="strip-val">${Math.round(v.HR || 75)}</div></div>
-            <div class="strip-item"><div class="strip-name">SpO2</div><div class="strip-val">${Math.round(v.SpO2 || 98)}%</div></div>
-            <div class="strip-item"><div class="strip-name">RESP</div><div class="strip-val">${Math.round(v.Resp || 16)}</div></div>
-            <div class="strip-item"><div class="strip-name">BP</div><div class="strip-val">${Math.round(v.SysBP || 120)}/${Math.round(v.DiaBP || 75)}</div></div>
-          </div>
+      // Refresh Detail View if active
+      if (viewDetail.style.display !== 'none' && currentDetailRecordId) {
+        loadPatientDetail(currentDetailRecordId);
+      }
+    }
 
-          <button class="btn-inspect">Inspect Patient →</button>
-        `;
-        patientsListContainer.appendChild(card);
+    // Render Overview Priority Roster
+    function renderPatientsOverview(patients) {
+      patientsContainer.innerHTML = '';
+      patients.forEach(p => {
+        const card = createPatientCard(p);
+        patientsContainer.appendChild(card);
       });
     }
 
-    // Fetch patient detail view
-    async function loadPatientDetailData() {
+    // Render Dedicated Patients Tab Roster (with interactive filtering)
+    function renderPatientsDirectory(patients) {
+      patientsDirectoryContainer.innerHTML = '';
+
+      let filtered = patients;
+      if (currentPatientFilter === 'CRITICAL') {
+        filtered = patients.filter(p => p.priority_status === 'CRITICAL_PRIORITY' || p.risk_category === 'HIGH' || p.risk_score >= 75);
+        patientsSubtitleTag.innerHTML = `Showing <strong style="color: var(--critical-badge);">${filtered.length} Critical Priority</strong> patients requiring immediate attention.`;
+        patientsRosterCountTag.innerText = `${filtered.length} Critical Patients`;
+      } else if (currentPatientFilter === 'HIGH') {
+        filtered = patients.filter(p => p.priority_status === 'HIGH_PRIORITY' || p.risk_category === 'MEDIUM' || (p.risk_score >= 50 && p.risk_score < 75));
+        patientsSubtitleTag.innerHTML = `Showing <strong style="color: var(--high-badge);">${filtered.length} High Priority</strong> patients requiring close monitoring.`;
+        patientsRosterCountTag.innerText = `${filtered.length} High Priority Patients`;
+      } else if (currentPatientFilter === 'ROUTINE') {
+        filtered = patients.filter(p => p.priority_status === 'ROUTINE_MONITORING' || (p.risk_category === 'LOW' && p.risk_score < 50));
+        patientsSubtitleTag.innerHTML = `Showing <strong style="color: var(--routine-badge);">${filtered.length} Routine Monitoring</strong> patients.`;
+        patientsRosterCountTag.innerText = `${filtered.length} Routine Patients`;
+      } else {
+        patientsSubtitleTag.innerText = 'Showing all active MIMIC ICU beds sorted by risk priority.';
+        patientsRosterCountTag.innerText = `${patients.length} Active Patients`;
+      }
+
+      if (filtered.length === 0) {
+        patientsDirectoryContainer.innerHTML = `
+          <div style="padding: 30px; text-align: center; color: var(--text-muted);">
+            No patients match the selected filter "${currentPatientFilter}". <button class="btn btn-sm btn-secondary" onclick="setPatientFilter('ALL')">Clear Filter</button>
+          </div>
+        `;
+        return;
+      }
+
+      filtered.forEach(p => {
+        const card = createPatientCard(p);
+        patientsDirectoryContainer.appendChild(card);
+      });
+    }
+
+    // Patient Priority Card Generator
+    function createPatientCard(p) {
+      const isCritical = p.priority_status === 'CRITICAL_PRIORITY' || p.risk_category === 'HIGH' || p.risk_score >= 75;
+      const isHigh = p.priority_status === 'HIGH_PRIORITY' || p.risk_category === 'MEDIUM' || (p.risk_score >= 50 && !isCritical);
+
+      let statusClass = 'status-routine';
+      let pillClass = 'pill-routine';
+      let pillText = 'ROUTINE';
+
+      if (isCritical) {
+        statusClass = 'status-critical';
+        pillClass = 'pill-critical';
+        pillText = 'CRITICAL';
+      } else if (isHigh) {
+        statusClass = 'status-high';
+        pillClass = 'pill-high';
+        pillText = 'HIGH';
+      }
+
+      const v = p.vitals || {};
+      const modalities = (p.available_modalities || []).map(m => `<span class="chip">${m}</span>`).join('');
+      
+      let trendHtml = `<span class="trend-indicator trend-stable">→ STABLE</span>`;
+      if (p.risk_trend_status === 'ESCALATING' || p.risk_trend_delta > 0) {
+        trendHtml = `<span class="trend-indicator trend-escalating">↑ ESCALATING (+${p.risk_trend_delta || 0})</span>`;
+      } else if (p.risk_trend_status === 'IMPROVING' || p.risk_trend_delta < 0) {
+        trendHtml = `<span class="trend-indicator trend-improving">↓ IMPROVING (${p.risk_trend_delta || 0})</span>`;
+      }
+
+      const card = document.createElement('div');
+      card.className = `patient-priority-card ${statusClass}`;
+      card.innerHTML = `
+        <div class="patient-id-block">
+          <h3>${p.bed_id || 'ICU-01'}</h3>
+          <div class="patient-sub-text">Patient #${p.subject_id}</div>
+          <div class="modality-chips">${modalities}</div>
+        </div>
+
+        <div class="risk-score-box">
+          <div class="priority-pill ${pillClass}">${pillText}</div>
+          <div class="score-badge-row" style="margin-top: 6px;">
+            <span class="score-number font-mono" style="color: ${isCritical ? 'var(--critical-badge)' : (isHigh ? 'var(--high-badge)' : 'var(--routine-badge)')};">${(p.risk_score).toFixed(1)}</span>
+            <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">/ 100 Risk</span>
+          </div>
+          ${trendHtml}
+        </div>
+
+        <div class="card-vitals-grid font-mono">
+          <div class="vital-item">
+            <div class="vital-item-lbl">HR</div>
+            <div class="vital-item-val">${Math.round(v.HR || 75)}</div>
+            <div class="vital-item-unit">bpm</div>
+          </div>
+          <div class="vital-item">
+            <div class="vital-item-lbl">SpO₂</div>
+            <div class="vital-item-val">${Math.round(v.SpO2 || 98)}%</div>
+            <div class="vital-item-unit">%</div>
+          </div>
+          <div class="vital-item">
+            <div class="vital-item-lbl">RESP</div>
+            <div class="vital-item-val">${Math.round(v.Resp || 16)}</div>
+            <div class="vital-item-unit">/min</div>
+          </div>
+          <div class="vital-item">
+            <div class="vital-item-lbl">MAP</div>
+            <div class="vital-item-val">${Math.round(v.MAP || (v.SysBP ? Math.round((v.SysBP + 2 * v.DiaBP)/3) : 88))}</div>
+            <div class="vital-item-unit">mmHg</div>
+          </div>
+        </div>
+
+        <div class="card-action-block">
+          ${p.active_alerts_count > 0 ? `<div class="alert-counter-badge">🔔 ${p.active_alerts_count} Active Alert${p.active_alerts_count > 1 ? 's' : ''}</div>` : '<div style="height:22px;"></div>'}
+          <button class="btn btn-secondary btn-sm" onclick="openPatientDetail('${p.record_id}')">Inspect Patient →</button>
+        </div>
+      `;
+      return card;
+    }
+
+    // Render Sidebar Alerts (Overview)
+    function renderAlertsSidebar(alerts) {
+      alertsSidebarContainer.innerHTML = '';
+      if (!alerts || alerts.length === 0) {
+        alertsSidebarContainer.innerHTML = `
+          <div style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 13px;">
+            ✓ No active clinical alerts right now.
+          </div>
+        `;
+        return;
+      }
+
+      alerts.forEach(a => {
+        const patientId = a.subject_id || a.patient_id || a.record_id || 'Unknown';
+        const sevClass = a.severity === 'CRITICAL' ? 'sev-critical' : (a.severity === 'HIGH' ? 'sev-high' : 'sev-info');
+        const badgeColor = a.severity === 'CRITICAL' ? 'var(--critical-badge)' : (a.severity === 'HIGH' ? 'var(--high-badge)' : 'var(--brand-blue)');
+
+        const card = document.createElement('div');
+        card.className = `alert-card ${sevClass}`;
+        card.onclick = () => openPatientDetail(a.record_id);
+        card.innerHTML = `
+          <div class="alert-header-row">
+            <span class="alert-patient-tag">${a.bed_id || 'ICU-02'} • Patient #${patientId}</span>
+            <span class="alert-sev-badge" style="background: ${badgeColor}; color: #ffffff;">${a.severity}</span>
+          </div>
+          <div class="alert-title">${a.alert_type}</div>
+          <div class="alert-evidence">${a.evidence || a.description || a.message || ''}</div>
+          <div class="alert-time">${a.timestamp || 'Just now'}</div>
+        `;
+        alertsSidebarContainer.appendChild(card);
+      });
+    }
+
+    // Render Table Alerts (Dedicated Alerts Tab View)
+    function renderAlertsTable(alerts) {
+      alertsTableBody.innerHTML = '';
+      if (!alerts || alerts.length === 0) {
+        alertsTableBody.innerHTML = `
+          <tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">No active alerts logged</td></tr>
+        `;
+        return;
+      }
+
+      alerts.forEach(a => {
+        const patientId = a.subject_id || a.patient_id || a.record_id || 'Unknown';
+        const badgeColor = a.severity === 'CRITICAL' ? 'var(--critical-badge)' : (a.severity === 'HIGH' ? 'var(--high-badge)' : 'var(--brand-blue)');
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><span class="alert-sev-badge" style="background: ${badgeColor}; color: #ffffff;">${a.severity}</span></td>
+          <td><strong>Patient #${patientId}</strong></td>
+          <td class="font-mono">${a.bed_id || 'ICU-02'}</td>
+          <td><strong>${a.alert_type}</strong></td>
+          <td style="color: var(--text-secondary); max-width: 400px;">${a.evidence || a.message || a.description || ''}</td>
+          <td class="font-mono" style="font-size: 11px; color: var(--text-muted);">${a.timestamp || 'Just now'}</td>
+          <td><button class="btn btn-sm btn-secondary" onclick="openPatientDetail('${a.record_id}')">Inspect Patient →</button></td>
+        `;
+        alertsTableBody.appendChild(tr);
+      });
+    }
+
+    // Render Research Diagnostics Table
+    function renderResearchDiagnostics(patients) {
+      researchDiagnosticsTableBody.innerHTML = '';
+      patients.forEach(p => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="font-mono"><strong>${p.bed_id || 'ICU-01'}</strong></td>
+          <td class="font-mono">Patient #${p.subject_id}</td>
+          <td class="font-mono">${p.record_id}</td>
+          <td class="font-mono">${(p.clinical_score || p.vitals?.HR || 50).toFixed ? (p.clinical_score || 50).toFixed(1) : 50}</td>
+          <td class="font-mono">${(p.waveform_score || 50).toFixed ? (p.waveform_score || 50).toFixed(1) : 50}</td>
+          <td class="font-mono"><strong>${(p.risk_score).toFixed(1)}</strong></td>
+          <td><span class="priority-pill ${p.priority_status === 'CRITICAL_PRIORITY' ? 'pill-critical' : (p.priority_status === 'HIGH_PRIORITY' ? 'pill-high' : 'pill-routine')}">${p.priority_status}</span></td>
+        `;
+        researchDiagnosticsTableBody.appendChild(tr);
+      });
+    }
+
+    // Inspect Patient Detail View
+    async function openPatientDetail(recordId) {
+      currentDetailRecordId = recordId;
+      showTab('detail');
+      loadPatientDetail(recordId);
+    }
+
+    async function loadPatientDetail(recordId) {
       try {
-        const resp = await fetch('/api/multimodal/analyze', {
+        const wIdx = simState ? simState.current_step : 0;
+        const res = await fetch('/api/multimodal/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ record_id: currentPatientRecordId, window_index: currentWindowIdx })
+          body: JSON.stringify({ record_id: String(recordId), window_index: wIdx })
         });
-        const data = await resp.json();
-        renderPatientDetail(data);
+
+        if (res.ok) {
+          const data = await res.json();
+          renderPatientDetail(data);
+        }
       } catch (err) {
-        console.error('Error loading patient detail:', err);
+        console.error('Failed to load patient detail:', err);
       }
     }
 
     function renderPatientDetail(data) {
-      const wLabel = formatWindowLabel(data.window_index || currentWindowIdx);
-      windowIndicator.innerText = wLabel;
-      detailTimeTag.innerText = data.timestamp || wLabel;
-      detailPatientTitle.innerText = `Patient #${data.subject_id} (Record ${data.record_id})`;
+      detailPatientTitle.innerText = `Patient #${data.subject_id} (Bed ${data.bed_id || 'ICU-02'})`;
+      detailPatientSubtitle.innerText = `Record #${data.record_id} • ${data.timestamp || 'Window 1'}`;
+      detailTimestampTag.innerText = data.timestamp || `Window ${(data.window_index || 0) + 1}`;
 
-      const score = Math.round(data.risk_score || 0);
-      gaugeScore.innerText = score;
+      const score = Number((data.risk_score || 0).toFixed(1));
+      detailRiskScoreVal.innerText = score.toFixed(1);
 
-      const cat = data.risk_category || 'LOW';
-      let color = 'var(--risk-low)';
-      let glow = 'rgba(16, 185, 129, 0.3)';
+      const isCritical = data.priority_status === 'CRITICAL_PRIORITY' || data.risk_category === 'HIGH' || score >= 75;
+      const isHigh = data.priority_status === 'HIGH_PRIORITY' || data.risk_category === 'MEDIUM' || (score >= 50 && !isCritical);
 
-      if (cat === 'MEDIUM') {
-        color = 'var(--risk-med)';
-        glow = 'rgba(245, 158, 11, 0.3)';
-      } else if (cat === 'HIGH') {
-        color = 'var(--risk-high)';
-        glow = 'rgba(239, 68, 68, 0.3)';
+      if (isCritical) {
+        detailPriorityBadge.className = 'priority-pill pill-critical';
+        detailPriorityBadge.innerText = 'CRITICAL PRIORITY';
+        detailRiskCatPill.className = 'priority-pill pill-critical';
+        detailRiskCatPill.innerText = 'CRITICAL RISK';
+        detailRiskScoreVal.style.color = 'var(--critical-badge)';
+      } else if (isHigh) {
+        detailPriorityBadge.className = 'priority-pill pill-high';
+        detailPriorityBadge.innerText = 'HIGH PRIORITY';
+        detailRiskCatPill.className = 'priority-pill pill-high';
+        detailRiskCatPill.innerText = 'HIGH RISK';
+        detailRiskScoreVal.style.color = 'var(--high-badge)';
+      } else {
+        detailPriorityBadge.className = 'priority-pill pill-routine';
+        detailPriorityBadge.innerText = 'ROUTINE MONITORING';
+        detailRiskCatPill.className = 'priority-pill pill-routine';
+        detailRiskCatPill.innerText = 'ROUTINE RISK';
+        detailRiskScoreVal.style.color = 'var(--routine-badge)';
       }
 
-      gaugeCircle.style.setProperty('--gauge-color', color);
-      gaugeCircle.style.setProperty('--gauge-pct', `${score}%`);
-      gaugeCircle.style.setProperty('--gauge-glow', glow);
-
-      riskBadge.innerText = `${cat} RISK`;
-      riskBadge.className = `cat-badge ${cat === 'HIGH' ? 'cat-high' : (cat === 'MEDIUM' ? 'cat-med' : 'cat-low')}`;
-      detailHeaderBadge.innerText = `${cat} RISK`;
-      detailHeaderBadge.className = riskBadge.className;
+      // Trend
+      const delta = data.risk_trend_delta || 0;
+      if (data.risk_trend_status === 'ESCALATING' || delta > 0) {
+        detailTrendText.className = 'trend-indicator trend-escalating';
+        detailTrendText.innerText = `↑ ESCALATING (+${delta} vs prev window)`;
+      } else if (data.risk_trend_status === 'IMPROVING' || delta < 0) {
+        detailTrendText.className = 'trend-indicator trend-improving';
+        detailTrendText.innerText = `↓ IMPROVING (${delta} vs prev window)`;
+      } else {
+        detailTrendText.className = 'trend-indicator trend-stable';
+        detailTrendText.innerText = `→ STABLE`;
+      }
 
       // Vitals
       const v = data.clinical_features || {};
@@ -812,27 +2022,27 @@
       valSpO2.innerText = Math.round(v.SpO2 || 98);
       valResp.innerText = Math.round(v.Resp || 16);
       valBP.innerText = `${Math.round(v.SysBP || 120)}/${Math.round(v.DiaBP || 75)}`;
-      valMAP.innerText = Math.round(v.MAP || 88);
+      valMAP.innerText = Math.round(v.MAP || (v.SysBP ? Math.round((v.SysBP + 2*v.DiaBP)/3) : 88));
 
       // Factors
       factorsContainer.innerHTML = '';
       (data.contributing_factors || []).forEach(f => {
-        const item = document.createElement('div');
-        item.className = 'factor-item';
-        item.innerHTML = `
-          <div>
-            <div class="factor-title">${f.factor}</div>
-            <div class="factor-desc">${f.description}</div>
-          </div>
+        const factorCard = document.createElement('div');
+        factorCard.className = 'factor-card';
+        factorCard.innerHTML = `
+          <div class="factor-card-title">${f.factor}</div>
+          <div class="factor-card-desc">${f.description}</div>
+          <div class="factor-impact-badge">${f.severity || 'High Impact'}</div>
         `;
-        factorsContainer.appendChild(item);
+        factorsContainer.appendChild(factorCard);
       });
 
       // Diagnostics
-      diagClinScore.innerText = (data.clinical_score || 0).toFixed(1);
-      diagWaveScore.innerText = (data.waveform_score || 0).toFixed(1);
+      diagClinicalScore.innerText = (data.clinical_score || 0).toFixed(1);
+      diagWaveformScore.innerText = (data.waveform_score || 0).toFixed(1);
+      diagRecordId.innerText = data.record_id || '';
 
-      // Clean signal handling: Hide empty boxes for unmonitored channels
+      // Waveform signal canvas rendering
       const samples = data.waveform_samples || {};
       const hasEcg = samples.ecg && samples.ecg.length > 0;
       const hasPpg = samples.ppg && samples.ppg.length > 0;
@@ -843,33 +2053,33 @@
       boxAbp.style.display = hasAbp ? 'block' : 'none';
 
       const unmonitored = [];
-      if (!hasEcg) unmonitored.push('ECG');
-      if (!hasPpg) unmonitored.push('PPG');
-      if (!hasAbp) unmonitored.push('Invasive Arterial Line (ABP)');
+      if (!hasEcg) unmonitored.push('ECG Lead II');
+      if (!hasPpg) unmonitored.push('PPG / Pleth Pulse');
+      if (!hasAbp) unmonitored.push('Arterial Line (ABP)');
 
       if (unmonitored.length > 0) {
         unmonitoredBanner.style.display = 'flex';
-        unmonitoredList.innerText = unmonitored.join(', ');
+        unmonitoredListText.innerText = unmonitored.join(', ');
       } else {
         unmonitoredBanner.style.display = 'none';
       }
 
-      if (hasEcg) drawWaveform(ecgCtx, samples.ecg, 'var(--ecg-color)');
-      if (hasPpg) drawWaveform(ppgCtx, samples.ppg, 'var(--ppg-color)');
-      if (hasAbp) drawWaveform(abpCtx, samples.abp, 'var(--abp-color)');
+      if (hasEcg) drawWaveformSignal(ecgCtx, samples.ecg, '#059669');
+      if (hasPpg) drawWaveformSignal(ppgCtx, samples.ppg, '#0284c7');
+      if (hasAbp) drawWaveformSignal(abpCtx, samples.abp, '#e11d48');
     }
 
-    function drawWaveform(ctx, signal, color) {
+    function drawWaveformSignal(ctx, signal, color) {
       const cvs = ctx.canvas;
-      cvs.width = cvs.clientWidth;
-      cvs.height = cvs.clientHeight;
+      cvs.width = cvs.clientWidth || 600;
+      cvs.height = cvs.clientHeight || 90;
 
       ctx.clearRect(0, 0, cvs.width, cvs.height);
       if (!signal || signal.length === 0) return;
 
       ctx.beginPath();
       ctx.strokeStyle = color;
-      ctx.lineWidth = 1.8;
+      ctx.lineWidth = 2;
 
       const step = cvs.width / (signal.length - 1);
       const min = Math.min(...signal);
@@ -879,7 +2089,7 @@
       signal.forEach((val, i) => {
         const x = i * step;
         const norm = (val - min) / range;
-        const y = cvs.height - (norm * (cvs.height - 20) + 10);
+        const y = cvs.height - (norm * (cvs.height - 16) + 8);
         if (i === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
       });
@@ -887,68 +2097,54 @@
       ctx.stroke();
     }
 
-    function openPatientDetail(recId) {
-      currentPatientRecordId = recId;
-      activeView = 'detail';
-      overviewView.classList.remove('view-active');
-      detailView.classList.add('view-active');
-      loadPatientDetailData();
-    }
-
+    // Event Listeners
     btnBackToOverview.addEventListener('click', () => {
-      activeView = 'overview';
-      detailView.classList.remove('view-active');
-      overviewView.classList.add('view-active');
-      loadOverviewData();
+      showTab(lastActiveTab || 'overview');
+      currentDetailRecordId = null;
     });
 
-    btnPrevWindow.addEventListener('click', () => {
-      if (currentWindowIdx > 0) {
-        currentWindowIdx--;
-        refreshCurrentView();
-      }
+    btnLogoHome.addEventListener('click', (e) => {
+      e.preventDefault();
+      showTab('overview');
+      currentDetailRecordId = null;
     });
 
-    btnNextWindow.addEventListener('click', () => {
-      if (currentWindowIdx < totalWindows - 1) {
-        currentWindowIdx++;
-        refreshCurrentView();
-      }
-    });
-
-    btnReplay.addEventListener('click', () => {
-      if (isReplaying) {
-        clearInterval(replayTimer);
-        isReplaying = false;
-        btnReplay.innerText = '▶ Start Live Replay';
+    btnToggleSim.addEventListener('click', () => {
+      if (isAutoPlaying) {
+        clearInterval(autoPlayInterval);
+        isAutoPlaying = false;
+        btnToggleSim.innerText = '▶ Play';
+        simStatusDot.classList.remove('active');
+        simStatusText.innerText = 'PAUSED';
       } else {
-        isReplaying = true;
-        btnReplay.innerText = '⏸ Pause Replay';
-        currentWindowIdx = 0;
-        refreshCurrentView();
-        replayTimer = setInterval(() => {
-          if (currentWindowIdx < totalWindows - 1) {
-            currentWindowIdx++;
-            refreshCurrentView();
-          } else {
-            clearInterval(replayTimer);
-            isReplaying = false;
-            btnReplay.innerText = '▶ Start Live Replay';
-          }
-        }, 2500);
+        isAutoPlaying = true;
+        btnToggleSim.innerText = '⏸ Pause';
+        simStatusDot.classList.add('active');
+        simStatusText.innerText = 'LIVE SIMULATION';
+        startAutoPlayTimer();
       }
     });
 
-    function refreshCurrentView() {
-      if (activeView === 'overview') {
-        loadOverviewData();
-      } else {
-        loadPatientDetailData();
-      }
+    btnStepSim.addEventListener('click', () => {
+      stepSimulation();
+    });
+
+    btnResetSim.addEventListener('click', () => {
+      resetSimulation();
+    });
+
+    function startAutoPlayTimer() {
+      if (autoPlayInterval) clearInterval(autoPlayInterval);
+      autoPlayInterval = setInterval(() => {
+        if (isAutoPlaying) {
+          stepSimulation();
+        }
+      }, 3500);
     }
 
     // Initial Load
-    loadOverviewData();
+    fetchSimState();
+    startAutoPlayTimer();
   </script>
 </body>
 </html>
