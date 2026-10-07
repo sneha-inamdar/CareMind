@@ -277,3 +277,17 @@ def test_step0_priority_initialization_regression(sim_engine):
             assert p["priority_status"] == "HIGH_PRIORITY", f"Patient {p['subject_id']} with risk {p['risk_score']} should be HIGH_PRIORITY"
         else:
             assert p["priority_status"] == "ROUTINE_MONITORING"
+
+
+def test_alert_payload_patient_id_mapping(sim_engine, api_client):
+    """15. Regression test: Verify all active alerts contain non-null patient_id and subject_id fields."""
+    sim_engine.reset()
+    res = api_client.get("/api/alerts")
+    assert res.status_code == 200
+    alerts = res.json().get("alerts", [])
+    assert len(alerts) > 0
+    for alert in alerts:
+        assert "subject_id" in alert and alert["subject_id"] is not None
+        assert "patient_id" in alert and alert["patient_id"] is not None
+        assert alert["subject_id"] == alert["patient_id"]
+

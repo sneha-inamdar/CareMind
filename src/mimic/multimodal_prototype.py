@@ -47,19 +47,22 @@ class ModalityEncoder:
         self.model.fit(X_scaled, y)
         self.is_fitted = True
 
-    def predict_risk_score(self, X: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def predict_risk_score(self, X: np.ndarray, temperature: float = 1.75) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Return calibrated modality risk score (0-100) and scaled feature values.
+        Return temperature-calibrated continuous modality risk score (0-100) and scaled feature values.
+        Uses logit decision function scaling with temperature dispersion T=1.75 to expand the dynamic range
+        and prevent artificial score saturation at 100.0 for severe observations.
         """
         if not self.is_fitted:
-            # Unfitted fallback heuristic based on z-scores
             X_scaled = (X - np.mean(X, axis=0, keepdims=True)) / (np.std(X, axis=0, keepdims=True) + 1e-6)
-            prob = 1.0 / (1.0 + np.exp(-np.mean(X_scaled, axis=1)))
-            return np.clip(prob * 100.0, 0.0, 100.0), X_scaled
+            logits = np.mean(X_scaled, axis=1)
+            calibrated_prob = 1.0 / (1.0 + np.exp(-logits / temperature))
+            return np.clip(calibrated_prob * 100.0, 0.0, 100.0), X_scaled
 
         X_scaled = self.scaler.transform(X)
-        probs = self.model.predict_proba(X_scaled)[:, 1]
-        scores = np.clip(probs * 100.0, 0.0, 100.0)
+        logits = self.model.decision_function(X_scaled)
+        calibrated_prob = 1.0 / (1.0 + np.exp(-logits / temperature))
+        scores = np.clip(calibrated_prob * 100.0, 0.0, 100.0)
         return scores, X_scaled
 
 
@@ -415,8 +418,9 @@ class CareMindMultimodalPrototype:
         else:
             X_fusion = np.column_stack([clinical_score, waveform_score, (clinical_score * waveform_score) / 100.0])
             X_fusion_scaled = self.fusion_scaler.transform(X_fusion)
-            fusion_prob = float(self.fusion_model.predict_proba(X_fusion_scaled)[:, 1][0])
-            raw_fused_score = 0.5 * clinical_score + 0.5 * waveform_score + (fusion_prob - 0.5) * 20.0
+            fusion_logits = self.fusion_model.decision_function(X_fusion_scaled)
+            fusion_prob = float(1.0 / (1.0 + np.exp(-fusion_logits[0] / 1.75)))
+            raw_fused_score = 0.5 * clinical_score + 0.5 * waveform_score + (fusion_prob - 0.5) * 10.0
 
         risk_score = float(np.clip(raw_fused_score, 0.0, 100.0))
         risk_category = self.calculate_risk_category(risk_score)
