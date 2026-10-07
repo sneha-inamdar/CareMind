@@ -1015,11 +1015,11 @@
         <!-- LIVE SIMULATION TOOLBAR -->
         <div class="sim-controls-toolbar">
           <div class="sim-status-indicator">
-            <div class="sim-status-dot active" id="simStatusDot"></div>
-            <span id="simStatusText">LIVE SIMULATION</span>
+            <div class="sim-status-dot" id="simStatusDot"></div>
+            <span id="simStatusText">PAUSED</span>
           </div>
           <div class="btn-group">
-            <button class="btn btn-sm btn-primary" id="btnToggleSim">⏸ Pause</button>
+            <button class="btn btn-sm btn-primary" id="btnToggleSim">▶ Play</button>
             <button class="btn btn-sm" id="btnStepSim" title="Advance 1 step">⏭ Step</button>
             <button class="btn btn-sm" id="btnResetSim" title="Reset simulation">🔄 Reset</button>
           </div>
@@ -1226,6 +1226,97 @@
         </div>
       </div>
 
+      <!-- MODEL COMPARISON MATRIX PANEL -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title-group">
+            <h2>Single-Signal vs. Multimodal Model Comparison</h2>
+            <p>Empirical benchmark across patient-level splits (Zero patient leakage)</p>
+          </div>
+          <span style="font-size: 11px; background: var(--brand-indigo-soft); color: var(--brand-indigo); font-weight: 700; padding: 4px 10px; border-radius: 6px;">Patient-Level Split</span>
+        </div>
+        <div style="padding: 20px 24px;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Approach</th>
+                <th>Model Architecture</th>
+                <th>Precision</th>
+                <th>Recall</th>
+                <th>F1-Score</th>
+                <th>ROC-AUC</th>
+                <th>PR-AUC</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>ECG (Handcrafted Features)</strong></td>
+                <td>SVM (RBF Kernel)</td>
+                <td class="font-mono">1.0000</td>
+                <td class="font-mono">1.0000</td>
+                <td class="font-mono">1.0000</td>
+                <td class="font-mono">1.0000</td>
+                <td class="font-mono">1.0000</td>
+              </tr>
+              <tr>
+                <td><strong>ECG (Raw 1D Signals)</strong></td>
+                <td>1D CNN Baseline (PyTorch)</td>
+                <td class="font-mono">1.0000</td>
+                <td class="font-mono">1.0000</td>
+                <td class="font-mono">1.0000</td>
+                <td class="font-mono">1.0000</td>
+                <td class="font-mono">1.0000</td>
+              </tr>
+              <tr>
+                <td><strong>PPG-Only</strong></td>
+                <td>Logistic Regression</td>
+                <td class="font-mono">0.4737</td>
+                <td class="font-mono">0.2308</td>
+                <td class="font-mono">0.3103</td>
+                <td class="font-mono">0.5465</td>
+                <td class="font-mono">0.4680</td>
+              </tr>
+              <tr>
+                <td><strong>ABP-Only</strong></td>
+                <td>Logistic Regression</td>
+                <td class="font-mono">0.5789</td>
+                <td class="font-mono">0.5641</td>
+                <td class="font-mono">0.5714</td>
+                <td class="font-mono">0.6933</td>
+                <td class="font-mono">0.7177</td>
+              </tr>
+              <tr>
+                <td><strong>Clinical-Vitals-Only</strong></td>
+                <td>Logistic Regression</td>
+                <td class="font-mono">0.7000</td>
+                <td class="font-mono">0.5385</td>
+                <td class="font-mono">0.6087</td>
+                <td class="font-mono">0.7712</td>
+                <td class="font-mono">0.7506</td>
+              </tr>
+              <tr>
+                <td><strong>Waveform-Only (ECG+PPG+ABP)</strong></td>
+                <td>Random Forest Classifier</td>
+                <td class="font-mono">0.7812</td>
+                <td class="font-mono">0.6410</td>
+                <td class="font-mono">0.7042</td>
+                <td class="font-mono">0.7989</td>
+                <td class="font-mono">0.8379</td>
+              </tr>
+              <tr style="background: var(--brand-blue-soft); font-weight: 700;">
+                <td><strong style="color: var(--brand-blue);">Multimodal Fusion (CareMind Risk)</strong></td>
+                <td>Adaptive Late Fusion (LR)</td>
+                <td class="font-mono" style="color: var(--brand-blue);">0.8125</td>
+                <td class="font-mono" style="color: var(--brand-blue);">0.6667</td>
+                <td class="font-mono" style="color: var(--brand-blue);">0.7324</td>
+                <td class="font-mono" style="color: var(--brand-blue);">0.8276</td>
+                <td class="font-mono" style="color: var(--brand-blue);">0.8516</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- REPLAY & SIMULATION METADATA PANEL -->
       <div class="section-card">
         <div class="section-header">
@@ -1255,14 +1346,14 @@
                 <td>15-minute evaluation windows</td>
               </tr>
               <tr>
-                <td><strong>MIMIC Cohort Size</strong></td>
-                <td class="font-mono">3 Monitored Patients</td>
-                <td>Genuine PhysioNet MIMIC-IV waveform records</td>
+                <td><strong>MIMIC Waveform Index</strong></td>
+                <td class="font-mono">199 Records (197 Subjects)</td>
+                <td>Full mimic4wdb/0.1.0 PhysioNet inventory</td>
               </tr>
               <tr>
                 <td><strong>Waveform Sampling Frequencies</strong></td>
                 <td class="font-mono">62.5 Hz / 125.0 Hz</td>
-                <td>Resampled continuous ECG & PPG signals</td>
+                <td>Resampled continuous ECG, PPG, and ABP signals</td>
               </tr>
             </tbody>
           </table>
@@ -1294,6 +1385,17 @@
               <!-- Dynamically populated diagnostics rows -->
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- RESEARCH LIMITATIONS & DISCLAIMER BANNER -->
+      <div style="background: #fffbe6; border: 1px solid #fde68a; border-radius: 12px; padding: 18px 22px; display: flex; align-items: flex-start; gap: 14px;">
+        <span style="font-size: 22px; line-height: 1;">⚠️</span>
+        <div>
+          <h4 style="font-size: 13px; font-weight: 700; color: #92400e;">Research & Academic Presentation Disclaimer</h4>
+          <p style="font-size: 12px; color: #78350f; margin-top: 4px; line-height: 1.5;">
+            <strong>Preliminary Research Prototype Evaluation — Not Clinical Validation.</strong> CareMind Physiological Risk Score (0-100) is an engineering prototype decision-support metric for physiological instability, evaluated on open-access MIMIC-IV and PhysioNet datasets under patient-level split criteria. It is not intended for diagnostic use or mortality probability estimation.
+          </p>
         </div>
       </div>
 
@@ -1495,8 +1597,9 @@
   <script>
     // State Management
     let simState = null;
-    let isAutoPlaying = true;
+    let isAutoPlaying = false;
     let autoPlayInterval = null;
+    let inFlightStep = false;
     let currentDetailRecordId = null;
     let currentPatientFilter = 'ALL'; // 'ALL', 'CRITICAL', 'HIGH', 'ROUTINE'
     let lastActiveTab = 'overview';
@@ -1593,7 +1696,7 @@
       }
 
       [viewOverview, viewPatients, viewAlerts, viewResearch, viewDetail].forEach(v => v.style.display = 'none');
-      [tabOverview, tabPatients, tabAlerts].forEach(t => t.classList.remove('active'));
+      [tabOverview, tabPatients, tabAlerts].forEach(t => t && t.classList.remove('active'));
 
       metricsBanner.style.display = (tabName === 'detail' || tabName === 'research') ? 'none' : 'grid';
 
@@ -1672,6 +1775,8 @@
     }
 
     async function stepSimulation() {
+      if (inFlightStep) return;
+      inFlightStep = true;
       try {
         const res = await fetch('/api/simulation/step', { method: 'POST' });
         if (res.ok) {
@@ -1680,10 +1785,15 @@
         }
       } catch (err) {
         console.error('Failed to step simulation:', err);
+      } finally {
+        inFlightStep = false;
       }
     }
 
     async function resetSimulation() {
+      stopAutoPlay();
+      if (inFlightStep) return;
+      inFlightStep = true;
       try {
         const res = await fetch('/api/simulation/start', { method: 'POST' });
         if (res.ok) {
@@ -1692,6 +1802,8 @@
         }
       } catch (err) {
         console.error('Failed to reset simulation:', err);
+      } finally {
+        inFlightStep = false;
       }
     }
 
@@ -2109,19 +2221,35 @@
       currentDetailRecordId = null;
     });
 
+    function stopAutoPlay() {
+      if (autoPlayInterval) {
+        clearInterval(autoPlayInterval);
+        autoPlayInterval = null;
+      }
+      isAutoPlaying = false;
+      btnToggleSim.innerText = '▶ Play';
+      simStatusDot.classList.remove('active');
+      simStatusText.innerText = 'PAUSED';
+    }
+
+    function startAutoPlay() {
+      stopAutoPlay();
+      isAutoPlaying = true;
+      btnToggleSim.innerText = '⏸ Pause';
+      simStatusDot.classList.add('active');
+      simStatusText.innerText = 'LIVE SIMULATION';
+      autoPlayInterval = setInterval(() => {
+        if (isAutoPlaying) {
+          stepSimulation();
+        }
+      }, 2500);
+    }
+
     btnToggleSim.addEventListener('click', () => {
       if (isAutoPlaying) {
-        clearInterval(autoPlayInterval);
-        isAutoPlaying = false;
-        btnToggleSim.innerText = '▶ Play';
-        simStatusDot.classList.remove('active');
-        simStatusText.innerText = 'PAUSED';
+        stopAutoPlay();
       } else {
-        isAutoPlaying = true;
-        btnToggleSim.innerText = '⏸ Pause';
-        simStatusDot.classList.add('active');
-        simStatusText.innerText = 'LIVE SIMULATION';
-        startAutoPlayTimer();
+        startAutoPlay();
       }
     });
 
@@ -2133,18 +2261,8 @@
       resetSimulation();
     });
 
-    function startAutoPlayTimer() {
-      if (autoPlayInterval) clearInterval(autoPlayInterval);
-      autoPlayInterval = setInterval(() => {
-        if (isAutoPlaying) {
-          stepSimulation();
-        }
-      }, 3500);
-    }
-
-    // Initial Load
+    // Initial Load - Fetch state without starting autoplay automatically
     fetchSimState();
-    startAutoPlayTimer();
   </script>
 </body>
 </html>

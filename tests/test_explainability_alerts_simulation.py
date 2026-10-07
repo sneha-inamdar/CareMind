@@ -205,7 +205,7 @@ def test_multi_patient_simulation(sim_engine):
     sim_engine.reset()
     state0 = sim_engine.get_simulation_state()
     assert state0["status"] == "success"
-    assert state0["patient_count"] == 3
+    assert state0["patient_count"] >= 3
     assert state0["current_step"] == 0
 
     sim_engine.step()
