@@ -152,6 +152,9 @@ def analyze_window(req: AnalyzeRequest):
                 timestamp_str=res.get("timestamp", "Window 1 • T+00:00")
             )
 
+        if "available_modalities" in cached:
+            res["record_available_modalities"] = cached["available_modalities"]
+
         return res
 
     raise HTTPException(status_code=404, detail=f"No data available for record '{req.record_id}'.")

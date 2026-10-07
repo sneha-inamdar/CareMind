@@ -1603,6 +1603,8 @@
     let currentDetailRecordId = null;
     let currentPatientFilter = 'ALL'; // 'ALL', 'CRITICAL', 'HIGH', 'ROUTINE'
     let lastActiveTab = 'overview';
+    const lastValidWaveforms = {};
+    const detailCache = {};
 
     // DOM Elements - Navigation Tabs
     const tabOverview = document.getElementById('tabOverview');
@@ -1782,6 +1784,10 @@
         if (res.ok) {
           simState = await res.json();
           renderDashboard();
+
+          if (viewDetail.style.display !== 'none' && currentDetailRecordId) {
+            await loadPatientDetail(currentDetailRecordId);
+          }
         }
       } catch (err) {
         console.error('Failed to step simulation:', err);
@@ -1799,6 +1805,10 @@
         if (res.ok) {
           simState = await res.json();
           renderDashboard();
+
+          if (viewDetail.style.display !== 'none' && currentDetailRecordId) {
+            await loadPatientDetail(currentDetailRecordId);
+          }
         }
       } catch (err) {
         console.error('Failed to reset simulation:', err);
@@ -1849,11 +1859,6 @@
       renderAlertsSidebar(alerts);
       renderAlertsTable(alerts);
       renderResearchDiagnostics(patients);
-
-      // Refresh Detail View if active
-      if (viewDetail.style.display !== 'none' && currentDetailRecordId) {
-        loadPatientDetail(currentDetailRecordId);
-      }
     }
 
     // Render Overview Priority Roster
@@ -2061,12 +2066,12 @@
 
     // Inspect Patient Detail View
     async function openPatientDetail(recordId) {
-      currentDetailRecordId = recordId;
+      currentDetailRecordId = String(recordId);
       showTab('detail');
-      loadPatientDetail(recordId);
     }
 
     async function loadPatientDetail(recordId) {
+      if (!recordId) return;
       try {
         const wIdx = simState ? simState.current_step : 0;
         const res = await fetch('/api/multimodal/analyze', {
@@ -2077,7 +2082,10 @@
 
         if (res.ok) {
           const data = await res.json();
-          renderPatientDetail(data);
+          // Ensure patient selection hasn't changed while request was in flight
+          if (String(currentDetailRecordId) === String(recordId)) {
+            renderPatientDetail(data);
+          }
         }
       } catch (err) {
         console.error('Failed to load patient detail:', err);
@@ -2085,6 +2093,11 @@
     }
 
     function renderPatientDetail(data) {
+      if (!data) return;
+
+      const recId = String(data.record_id);
+      detailCache[recId] = data;
+
       detailPatientTitle.innerText = `Patient #${data.subject_id} (Bed ${data.bed_id || 'ICU-02'})`;
       detailPatientSubtitle.innerText = `Record #${data.record_id} • ${data.timestamp || 'Window 1'}`;
       detailTimestampTag.innerText = data.timestamp || `Window ${(data.window_index || 0) + 1}`;
@@ -2136,7 +2149,7 @@
       valBP.innerText = `${Math.round(v.SysBP || 120)}/${Math.round(v.DiaBP || 75)}`;
       valMAP.innerText = Math.round(v.MAP || (v.SysBP ? Math.round((v.SysBP + 2*v.DiaBP)/3) : 88));
 
-      // Factors
+      // Contributing Factors
       factorsContainer.innerHTML = '';
       (data.contributing_factors || []).forEach(f => {
         const factorCard = document.createElement('div');
@@ -2154,20 +2167,53 @@
       diagWaveformScore.innerText = (data.waveform_score || 0).toFixed(1);
       diagRecordId.innerText = data.record_id || '';
 
-      // Waveform signal canvas rendering
-      const samples = data.waveform_samples || {};
-      const hasEcg = samples.ecg && samples.ecg.length > 0;
-      const hasPpg = samples.ppg && samples.ppg.length > 0;
-      const hasAbp = samples.abp && samples.abp.length > 0;
+      // Modality Availability & Waveform Signal Persistence
+      const recordMods = data.record_available_modalities || data.available_modalities || ['ECG', 'PPG', 'ABP'];
+      const winMods = data.available_modalities || recordMods;
+      const allMods = Array.from(new Set([...recordMods, ...winMods]));
 
-      boxEcg.style.display = hasEcg ? 'block' : 'none';
-      boxPpg.style.display = hasPpg ? 'block' : 'none';
-      boxAbp.style.display = hasAbp ? 'block' : 'none';
+      const hasEcgModality = allMods.some(m => m.toUpperCase().includes('ECG'));
+      const hasPpgModality = allMods.some(m => m.toUpperCase().includes('PPG') || m.toUpperCase().includes('PLETH'));
+      const hasAbpModality = allMods.some(m => m.toUpperCase().includes('ABP') || m.toUpperCase().includes('ART'));
+
+      // Update waveform sample cache if new valid non-empty arrays arrive
+      if (!lastValidWaveforms[recId]) {
+        lastValidWaveforms[recId] = { ecg: null, ppg: null, abp: null };
+      }
+
+      const newSamples = data.waveform_samples || {};
+      if (Array.isArray(newSamples.ecg) && newSamples.ecg.length > 0) {
+        lastValidWaveforms[recId].ecg = newSamples.ecg;
+      }
+      if (Array.isArray(newSamples.ppg) && newSamples.ppg.length > 0) {
+        lastValidWaveforms[recId].ppg = newSamples.ppg;
+      }
+      if (Array.isArray(newSamples.abp) && newSamples.abp.length > 0) {
+        lastValidWaveforms[recId].abp = newSamples.abp;
+      }
+
+      const ecgSignal = (newSamples.ecg && newSamples.ecg.length > 0) ? newSamples.ecg : lastValidWaveforms[recId].ecg;
+      const ppgSignal = (newSamples.ppg && newSamples.ppg.length > 0) ? newSamples.ppg : lastValidWaveforms[recId].ppg;
+      const abpSignal = (newSamples.abp && newSamples.abp.length > 0) ? newSamples.abp : lastValidWaveforms[recId].abp;
+
+      const showEcg = hasEcgModality || (ecgSignal && ecgSignal.length > 0);
+      const showPpg = hasPpgModality || (ppgSignal && ppgSignal.length > 0);
+      const showAbp = hasAbpModality || (abpSignal && abpSignal.length > 0);
+
+      // Container Visibility Transition Warning
+      if (boxEcg._prevDisplay && boxEcg._prevDisplay === 'block' && (showEcg ? 'block' : 'none') === 'none') {
+        console.warn(`[WaveformDebug] WARNING: boxEcg transitioned from visible -> hidden for record ${recId}`);
+      }
+      boxEcg._prevDisplay = showEcg ? 'block' : 'none';
+
+      boxEcg.style.display = showEcg ? 'block' : 'none';
+      boxPpg.style.display = showPpg ? 'block' : 'none';
+      boxAbp.style.display = showAbp ? 'block' : 'none';
 
       const unmonitored = [];
-      if (!hasEcg) unmonitored.push('ECG Lead II');
-      if (!hasPpg) unmonitored.push('PPG / Pleth Pulse');
-      if (!hasAbp) unmonitored.push('Arterial Line (ABP)');
+      if (!showEcg) unmonitored.push('ECG Lead II');
+      if (!showPpg) unmonitored.push('PPG / Pleth Pulse');
+      if (!showAbp) unmonitored.push('Arterial Line (ABP)');
 
       if (unmonitored.length > 0) {
         unmonitoredBanner.style.display = 'flex';
@@ -2176,35 +2222,64 @@
         unmonitoredBanner.style.display = 'none';
       }
 
-      if (hasEcg) drawWaveformSignal(ecgCtx, samples.ecg, '#059669');
-      if (hasPpg) drawWaveformSignal(ppgCtx, samples.ppg, '#0284c7');
-      if (hasAbp) drawWaveformSignal(abpCtx, samples.abp, '#e11d48');
+      if (showEcg && ecgSignal) drawWaveformSignal(ecgCtx, ecgSignal, '#059669');
+      if (showPpg && ppgSignal) drawWaveformSignal(ppgCtx, ppgSignal, '#0284c7');
+      if (showAbp && abpSignal) drawWaveformSignal(abpCtx, abpSignal, '#e11d48');
+
+      // Comprehensive Waveform Debug Log
+      console.log(`[WaveformDebug]
+patient/record: ${data.subject_id} / ${recId}
+window: ${data.window_index}
+ECG samples: ${newSamples.ecg ? newSamples.ecg.length : 0} (drawn: ${ecgSignal ? ecgSignal.length : 0})
+PPG samples: ${newSamples.ppg ? newSamples.ppg.length : 0} (drawn: ${ppgSignal ? ppgSignal.length : 0})
+ABP samples: ${newSamples.abp ? newSamples.abp.length : 0} (drawn: ${abpSignal ? abpSignal.length : 0})
+available modalities: ${recordMods.join(', ')}
+canvas exists: ${Boolean(ecgCtx.canvas)}
+canvas dimensions: ${ecgCtx.canvas.width}x${ecgCtx.canvas.height} (clientWidth: ${ecgCtx.canvas.clientWidth})
+container display: boxEcg=${boxEcg.style.display}, boxPpg=${boxPpg.style.display}, boxAbp=${boxAbp.style.display}
+using cached waveform: ecg=${Boolean(!newSamples.ecg || newSamples.ecg.length === 0)}
+render result: ECG=${showEcg}, PPG=${showPpg}, ABP=${showAbp}`);
     }
 
     function drawWaveformSignal(ctx, signal, color) {
-      const cvs = ctx.canvas;
-      cvs.width = cvs.clientWidth || 600;
-      cvs.height = cvs.clientHeight || 90;
-
-      ctx.clearRect(0, 0, cvs.width, cvs.height);
       if (!signal || signal.length === 0) return;
+
+      const cvs = ctx.canvas;
+      const targetWidth = cvs.clientWidth || cvs.offsetWidth || 0;
+      const targetHeight = cvs.clientHeight || cvs.offsetHeight || 0;
+
+      // Guard against drawing into hidden or zero-dimension canvas
+      if (targetWidth === 0 || targetHeight === 0) return;
+
+      if (cvs.width !== targetWidth) {
+        cvs.width = targetWidth;
+      }
+      if (cvs.height !== targetHeight) {
+        cvs.height = targetHeight;
+      }
+
+      ctx.clearRect(0, 0, targetWidth, targetHeight);
 
       ctx.beginPath();
       ctx.strokeStyle = color;
       ctx.lineWidth = 2;
 
-      const step = cvs.width / (signal.length - 1);
-      const min = Math.min(...signal);
-      const max = Math.max(...signal);
+      const step = targetWidth / (signal.length - 1);
+      let min = Infinity;
+      let max = -Infinity;
+      for (let i = 0; i < signal.length; i++) {
+        if (signal[i] < min) min = signal[i];
+        if (signal[i] > max) max = signal[i];
+      }
       const range = (max - min) || 1.0;
 
-      signal.forEach((val, i) => {
+      for (let i = 0; i < signal.length; i++) {
         const x = i * step;
-        const norm = (val - min) / range;
-        const y = cvs.height - (norm * (cvs.height - 16) + 8);
+        const norm = (signal[i] - min) / range;
+        const y = targetHeight - (norm * (targetHeight - 16) + 8);
         if (i === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
-      });
+      }
 
       ctx.stroke();
     }
