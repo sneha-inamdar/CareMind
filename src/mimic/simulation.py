@@ -107,6 +107,8 @@ class CareMindSimulationEngine:
         """
         if self.current_step < self.total_steps - 1:
             self.current_step += 1
+        else:
+            self.current_step = 0
 
         for rec_id, p_state in self.patient_states.items():
             cached_windows = p_state.get("cached_windows", [])

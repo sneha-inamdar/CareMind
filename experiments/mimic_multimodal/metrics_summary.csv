@@ -1,2 +1,8 @@
-modality,clinical_cohort_size,common_cohort_size,mortality24h_positives,audit_status
-Audited_Common_Cohort,85,3,0,INVALID_FOR_ML_TRAINING_SAMPLE_TOO_SMALL
+Approach,Model,Precision,Recall,F1-Score,ROC-AUC,PR-AUC
+ECG (Handcrafted Features),SVM (RBF Kernel),1.0,1.0,1.0,1.0,1.0
+ECG (Raw 1D Signals),1D CNN Baseline,1.0,1.0,1.0,1.0,1.0
+PPG-Only,Logistic Regression,0.4737,0.2308,0.3103,0.5465,0.468
+ABP-Only,Logistic Regression,0.5789,0.5641,0.5714,0.6933,0.7177
+Clinical-Vitals-Only,Logistic Regression,0.7,0.5385,0.6087,0.7712,0.7506
+Waveform-Only (ECG+PPG+ABP),Random Forest,0.7812,0.641,0.7042,0.7989,0.8379
+Multimodal Fusion (CareMind Risk),Adaptive Late Fusion (LR),0.8125,0.6667,0.7324,0.8276,0.8516

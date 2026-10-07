@@ -53,7 +53,7 @@ class LocalJSONRepository(CareMindBaseRepository):
 
     def __init__(self, data_dir: str = DATA_DIR):
         self.data_dir = data_dir
-        self.records_metadata = [
+        self.fallback_records_metadata = [
             {
                 "record_id": "81739927",
                 "subject_id": 10014354,
@@ -100,11 +100,50 @@ class LocalJSONRepository(CareMindBaseRepository):
         return {}
 
     def get_available_records(self) -> List[Dict[str, Any]]:
-        return self.records_metadata
+        # Try loading index file
+        index_path = os.path.join(self.data_dir, "records_index.json")
+        if os.path.exists(index_path):
+            try:
+                with open(index_path, "r") as f:
+                    meta = json.load(f)
+                    if meta and len(meta) > 0:
+                        return meta
+            except Exception:
+                pass
+
+        # Otherwise scan directory for *.json files excluding index
+        if os.path.exists(self.data_dir):
+            files = [f for f in os.listdir(self.data_dir) if f.endswith(".json") and f != "records_index.json"]
+            if files:
+                records = []
+                for fn in files:
+                    try:
+                        with open(os.path.join(self.data_dir, fn), "r") as f:
+                            data = json.load(f)
+                            records.append({
+                                "record_id": data.get("record_id", fn.replace(".json", "")),
+                                "subject_id": data.get("subject_id", 10000000),
+                                "stay_id": data.get("stay_id", 30000000),
+                                "bed_id": data.get("bed_id", "Bed ICU"),
+                                "duration_hrs": data.get("duration_hrs", 24.0),
+                                "fs": data.get("fs", 125.0),
+                                "available_modalities": data.get("available_modalities", ["ECG", "Clinical Vitals"]),
+                                "tier": data.get("tier", "Tier 2 (ECG+PPG)"),
+                                "windows_count": len(data.get("windows", [])),
+                                "description": data.get("description", f"Patient #{data.get('subject_id')}")
+                            })
+                    except Exception:
+                        pass
+                if records:
+                    records.sort(key=lambda x: x["subject_id"])
+                    return records
+
+        return self.fallback_records_metadata
 
     def get_patients_overview(self, window_index: int = 0) -> List[Dict[str, Any]]:
         patients = []
-        for meta in self.records_metadata:
+        records = self.get_available_records()
+        for meta in records:
             cached = self._load_cached_json(meta["record_id"])
             if cached and "windows" in cached and len(cached["windows"]) > 0:
                 w_idx = min(window_index, len(cached["windows"]) - 1)
@@ -117,7 +156,7 @@ class LocalJSONRepository(CareMindBaseRepository):
                     "record_id": meta["record_id"],
                     "subject_id": meta["subject_id"],
                     "stay_id": meta["stay_id"],
-                    "bed_id": meta["bed_id"],
+                    "bed_id": meta.get("bed_id", f"Bed ICU-{(meta['subject_id'] % 20) + 1:02d}"),
                     "window_index": w_idx,
                     "timestamp": w_data.get("timestamp"),
                     "risk_score": w_data.get("risk_score", 0.0),

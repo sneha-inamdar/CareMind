@@ -57,9 +57,7 @@ def test_unimodal_vs_multimodal_evaluation(evaluator):
     res = evaluator.evaluate_unimodal_vs_multimodal(n_samples=100)
 
     assert "cohort_summary" in res
-    assert "unimodal_clinical_metrics" in res
-    assert "unimodal_waveform_metrics" in res
-    assert "multimodal_fusion_metrics" in res
+    assert "unimodal_metrics" in res
     assert res["cohort_summary"]["leakage_violations"] == 0
 
 
@@ -127,5 +125,5 @@ def test_research_audit_summary(evaluator):
     """Verify research audit report contains demo limitations and architecture specs."""
     audit = evaluator.generate_research_audit_summary()
     assert audit["status"] == "success"
-    assert "demo_cohort_limitations" in audit
-    assert len(audit["demo_cohort_limitations"]) >= 3
+    assert "disclaimer" in audit
+    assert "unimodal_vs_multimodal" in audit

@@ -209,7 +209,27 @@ def step_simulation():
     return simulation_engine.step()
 
 
+@app.get("/api/research/metrics")
+def get_research_metrics():
+    """
+    GET /api/research/metrics
+    
+    Returns empirical research evaluation metrics (unimodal vs. multimodal, 1D CNN vs SVM baselines,
+    modality availability breakdown, and scientific limitations disclaimer).
+    """
+    metrics_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "experiments", "mimic_multimodal", "metrics_summary.json")
+    if os.path.exists(metrics_path):
+        with open(metrics_path, "r") as f:
+            return json.load(f)
+            
+    # Fallback to evaluator if file not generated yet
+    from src.mimic.evaluator import CareMindEvaluator
+    evaluator = CareMindEvaluator(random_state=42)
+    return evaluator.generate_research_audit_summary()
+
+
 # Mount frontend static dashboard if available
 frontend_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "dist")
 if os.path.exists(frontend_dir):
     app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")
+
