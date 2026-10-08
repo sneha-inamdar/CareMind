@@ -81,6 +81,19 @@ def get_available_records():
     return {"status": "success", "count": len(records), "records": records}
 
 
+@app.post("/api/multimodal/sync_cohort")
+def sync_cohort():
+    """
+    POST /api/multimodal/sync_cohort
+    
+    Synchronizes CareMind operational metadata cohort with Supabase database.
+    """
+    from src.db.cohort_sync import sync_cohort_to_supabase
+    res = sync_cohort_to_supabase()
+    return res
+
+
+
 @app.get("/api/multimodal/patients")
 def get_icu_patients_overview(window_index: int = Query(0, ge=0, le=3)):
     """
