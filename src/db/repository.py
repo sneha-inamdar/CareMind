@@ -194,7 +194,7 @@ class LocalJSONRepository(CareMindBaseRepository):
 class SupabaseRepository(CareMindBaseRepository):
     """Supabase PostgreSQL repository implementation using Supabase Python Client SDK."""
 
-    def __init__(self, db_config: Optional[DatabaseConfig] = None):
+    def __init__(self, db_config: Optional[DatabaseConfig] = None, auto_sync: bool = True):
         self.config = db_config or DatabaseConfig()
         if not SUPABASE_SDK_AVAILABLE:
             raise ImportError("supabase python SDK is not installed.")
@@ -205,14 +205,28 @@ class SupabaseRepository(CareMindBaseRepository):
         key = self.config.supabase_service_key or self.config.supabase_key
         self.client: Client = create_client(self.config.supabase_url, key)
         self.local_fallback = LocalJSONRepository()
+        
+        if auto_sync:
+            self.sync_cohort()
+
+    def sync_cohort(self, source_cohort: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
+        """Synchronizes source cohort records into Supabase operational tables."""
+        from src.db.cohort_sync import MIMICCohortSyncEngine
+        sync_engine = MIMICCohortSyncEngine(db_config=self.config, client=self.client)
+        return sync_engine.sync_cohort_to_supabase(source_cohort)
 
     def get_available_records(self) -> List[Dict[str, Any]]:
         try:
             res = self.client.table("waveform_records").select("*").execute()
             if res.data and len(res.data) > 0:
+                print(f"[Repository] Using Supabase ({len(res.data)} operational records)")
                 return res.data
         except Exception as err:
-            print(f"[SupabaseRepository] get_available_records notice: {err}")
+            err_msg = str(err)
+            if "42501" in err_msg or "permission denied" in err_msg.lower():
+                print(f"[Repository] Supabase permission error (42501) — using LocalJSON fallback ({err_msg})")
+            else:
+                print(f"[Repository] Supabase notice: {err} — using LocalJSON fallback")
         return self.local_fallback.get_available_records()
 
     def get_patients_overview(self, window_index: int = 0) -> List[Dict[str, Any]]:
@@ -238,9 +252,14 @@ class SupabaseRepository(CareMindBaseRepository):
                         "primary_alert": "Monitored via Supabase"
                     })
                 patients.sort(key=lambda p: p["risk_score"], reverse=True)
+                print(f"[Repository] Using Supabase ({len(patients)} ICU patients overview)")
                 return patients
         except Exception as err:
-            print(f"[SupabaseRepository] get_patients_overview notice: {err}")
+            err_msg = str(err)
+            if "42501" in err_msg or "permission denied" in err_msg.lower():
+                print(f"[Repository] Supabase permission error (42501) — using LocalJSON fallback ({err_msg})")
+            else:
+                print(f"[Repository] Supabase notice: {err} — using LocalJSON fallback")
         return self.local_fallback.get_patients_overview(window_index)
 
     def get_record_detail(self, record_id: str) -> Optional[Dict[str, Any]]:
@@ -258,7 +277,11 @@ class SupabaseRepository(CareMindBaseRepository):
                     "source": "supabase"
                 }
         except Exception as err:
-            print(f"[SupabaseRepository] get_record_detail notice: {err}")
+            err_msg = str(err)
+            if "42501" in err_msg or "permission denied" in err_msg.lower():
+                print(f"[Repository] Supabase permission error (42501) — using LocalJSON fallback ({err_msg})")
+            else:
+                print(f"[Repository] Supabase notice: {err} — using LocalJSON fallback")
         return self.local_fallback.get_record_detail(record_id)
 
     def get_replay_timeline(self, record_id: str) -> List[Dict[str, Any]]:
@@ -282,7 +305,11 @@ class SupabaseRepository(CareMindBaseRepository):
                     })
                 return timeline
         except Exception as err:
-            print(f"[SupabaseRepository] get_replay_timeline notice: {err}")
+            err_msg = str(err)
+            if "42501" in err_msg or "permission denied" in err_msg.lower():
+                print(f"[Repository] Supabase permission error (42501) — using LocalJSON fallback ({err_msg})")
+            else:
+                print(f"[Repository] Supabase notice: {err} — using LocalJSON fallback")
         return self.local_fallback.get_replay_timeline(record_id)
 
 
@@ -296,5 +323,8 @@ def get_repository() -> CareMindBaseRepository:
         try:
             return SupabaseRepository(config)
         except Exception as err:
-            print(f"[DatabaseFactory] Supabase initialization notice: {err}. Using LocalJSONRepository fallback.")
+            print(f"[Repository] Supabase initialization notice: {err} — using LocalJSON fallback")
+    else:
+        print("[Repository] Supabase unconfigured — using LocalJSON fallback")
     return LocalJSONRepository()
+
