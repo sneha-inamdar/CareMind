@@ -52,6 +52,10 @@ class AnalyzeRequest(BaseModel):
     vitals_override: Optional[Dict[str, float]] = None
 
 
+class AddPatientRequest(BaseModel):
+    record_id: str
+
+
 def load_cached_record(record_id: str) -> Dict[str, Any]:
     """Helper to load pre-analyzed real record data from local cache if present."""
     cache_path = os.path.join(DATA_DIR, f"{record_id}.json")
@@ -75,10 +79,66 @@ def get_available_records():
     """
     GET /api/multimodal/records
     
-    Returns list of REAL available demo waveform records with subject IDs and modalities.
+    Returns list of REAL demo waveform records with subject IDs and modalities.
     """
     records = db_repository.get_available_records()
     return {"status": "success", "count": len(records), "records": records}
+
+
+@app.get("/api/multimodal/records/available")
+def get_available_unmonitored_records():
+    """
+    GET /api/multimodal/records/available
+    
+    Returns genuine cohort records from inventory that are not currently monitored.
+    """
+    records = db_repository.get_unmonitored_records()
+    return {"status": "success", "count": len(records), "records": records}
+
+
+@app.post("/api/multimodal/patients/add")
+def add_patient_record(req: AddPatientRequest):
+    """
+    POST /api/multimodal/patients/add
+    
+    Adds a genuine available record from cohort inventory to the active ICU monitored cohort.
+    Validates genuine data existence, prevents duplicate additions, updates persistence layer,
+    synchronizes operational metadata to Supabase (with LocalJSON fallback), and dynamically
+    registers record into simulation engine without resetting simulation.
+    """
+    if not req.record_id or not str(req.record_id).strip():
+        raise HTTPException(status_code=400, detail="record_id is required.")
+
+    rec_id = str(req.record_id).strip()
+
+    # Reject duplicates already monitored
+    if db_repository.is_record_monitored(rec_id) or rec_id in simulation_engine.patient_states:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Record '{rec_id}' is already present in the active monitored cohort."
+        )
+
+    try:
+        record_meta = db_repository.add_patient_to_cohort(rec_id)
+    except ValueError as ve:
+        err_msg = str(ve)
+        if "already present" in err_msg:
+            raise HTTPException(status_code=409, detail=err_msg)
+        raise HTTPException(status_code=404, detail=err_msg)
+    except Exception as err:
+        raise HTTPException(status_code=500, detail=f"Failed to add patient to cohort: {err}")
+
+    # Dynamically enroll record into running simulation engine
+    simulation_engine.add_patient_record(record_meta)
+
+    active_count = len(simulation_engine.patient_states)
+
+    return {
+        "status": "success",
+        "message": f"Patient #{record_meta.get('subject_id')} (Record {rec_id}) successfully enrolled into monitored cohort.",
+        "record": record_meta,
+        "monitored_patient_count": active_count
+    }
 
 
 @app.post("/api/multimodal/sync_cohort")

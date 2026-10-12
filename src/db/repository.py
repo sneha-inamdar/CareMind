@@ -43,8 +43,28 @@ class CareMindBaseRepository(ABC):
         pass
 
     @abstractmethod
-    def get_replay_timeline(self, record_id: str) -> List[Dict[str, Any]]:
-        """Return complete timeline windows for a record."""
+    def get_unmonitored_records(self) -> List[Dict[str, Any]]:
+        """Return genuine records from inventory not currently in monitored cohort."""
+        pass
+
+    @abstractmethod
+    def get_monitored_record_ids(self) -> List[str]:
+        """Return list of record IDs currently monitored."""
+        pass
+
+    @abstractmethod
+    def get_inventory_records(self) -> List[Dict[str, Any]]:
+        """Return all genuine records from cohort inventory."""
+        pass
+
+    @abstractmethod
+    def add_patient_to_cohort(self, record_id: str) -> Dict[str, Any]:
+        """Add a genuine record to the active monitored cohort."""
+        pass
+
+    @abstractmethod
+    def is_record_monitored(self, record_id: str) -> bool:
+        """Check if record_id is currently monitored."""
         pass
 
 
@@ -53,6 +73,7 @@ class LocalJSONRepository(CareMindBaseRepository):
 
     def __init__(self, data_dir: str = DATA_DIR):
         self.data_dir = data_dir
+        self.monitored_cohort_path = os.path.join(self.data_dir, "monitored_cohort.json")
         self.fallback_records_metadata = [
             {
                 "record_id": "81739927",
@@ -99,8 +120,8 @@ class LocalJSONRepository(CareMindBaseRepository):
                 return json.load(f)
         return {}
 
-    def get_available_records(self) -> List[Dict[str, Any]]:
-        # Try loading index file
+    def get_inventory_records(self) -> List[Dict[str, Any]]:
+        """Return all genuine records present in dataset index or local cache directory."""
         index_path = os.path.join(self.data_dir, "records_index.json")
         if os.path.exists(index_path):
             try:
@@ -111,9 +132,11 @@ class LocalJSONRepository(CareMindBaseRepository):
             except Exception:
                 pass
 
-        # Otherwise scan directory for *.json files excluding index
         if os.path.exists(self.data_dir):
-            files = [f for f in os.listdir(self.data_dir) if f.endswith(".json") and f != "records_index.json"]
+            files = [
+                f for f in os.listdir(self.data_dir)
+                if f.endswith(".json") and f not in ["records_index.json", "monitored_cohort.json"]
+            ]
             if files:
                 records = []
                 for fn in files:
@@ -121,9 +144,9 @@ class LocalJSONRepository(CareMindBaseRepository):
                         with open(os.path.join(self.data_dir, fn), "r") as f:
                             data = json.load(f)
                             records.append({
-                                "record_id": data.get("record_id", fn.replace(".json", "")),
-                                "subject_id": data.get("subject_id", 10000000),
-                                "stay_id": data.get("stay_id", 30000000),
+                                "record_id": str(data.get("record_id", fn.replace(".json", ""))),
+                                "subject_id": int(data.get("subject_id", 10000000)),
+                                "stay_id": int(data.get("stay_id", 30000000)),
                                 "bed_id": data.get("bed_id", "Bed ICU"),
                                 "duration_hrs": data.get("duration_hrs", 24.0),
                                 "fs": data.get("fs", 125.0),
@@ -139,6 +162,71 @@ class LocalJSONRepository(CareMindBaseRepository):
                     return records
 
         return self.fallback_records_metadata
+
+    def get_monitored_record_ids(self) -> List[str]:
+        """Return list of record IDs currently active in the monitored operational cohort."""
+        if os.path.exists(self.monitored_cohort_path):
+            try:
+                with open(self.monitored_cohort_path, "r") as f:
+                    data = json.load(f)
+                    if isinstance(data, list) and len(data) > 0:
+                        ids = [str(item["record_id"]) if isinstance(item, dict) else str(item) for item in data]
+                        return ids
+            except Exception as e:
+                print(f"[Repository] Warning reading monitored_cohort.json: {e}")
+
+        # Default initial operational cohort: 20 genuine records, leaving 4 available genuine records
+        inventory = self.get_inventory_records()
+        if len(inventory) > 20:
+            initial_ids = [str(r["record_id"]) for r in inventory[:20]]
+        else:
+            initial_ids = [str(r["record_id"]) for r in inventory]
+        self._save_monitored_record_ids(initial_ids)
+        return initial_ids
+
+    def _save_monitored_record_ids(self, ids: List[str]):
+        """Persist active monitored cohort record IDs to local JSON file."""
+        try:
+            with open(self.monitored_cohort_path, "w") as f:
+                json.dump(ids, f, indent=2)
+        except Exception as e:
+            print(f"[Repository] Error saving monitored_cohort.json: {e}")
+
+    def get_available_records(self) -> List[Dict[str, Any]]:
+        """Return metadata for all active monitored records in operational cohort."""
+        monitored_ids = set(self.get_monitored_record_ids())
+        inventory = self.get_inventory_records()
+        monitored_records = [r for r in inventory if str(r["record_id"]) in monitored_ids]
+        if not monitored_records:
+            return inventory
+        return monitored_records
+
+    def get_unmonitored_records(self) -> List[Dict[str, Any]]:
+        """Return genuine records from inventory that are not currently monitored."""
+        monitored_ids = set(self.get_monitored_record_ids())
+        inventory = self.get_inventory_records()
+        return [r for r in inventory if str(r["record_id"]) not in monitored_ids]
+
+    def is_record_monitored(self, record_id: str) -> bool:
+        """Check if record_id is already present in monitored cohort."""
+        return str(record_id).strip() in set(self.get_monitored_record_ids())
+
+    def add_patient_to_cohort(self, record_id: str) -> Dict[str, Any]:
+        """Add a genuine record to the active monitored cohort."""
+        rec_id = str(record_id).strip()
+        inventory = self.get_inventory_records()
+        found_meta = next((r for r in inventory if str(r["record_id"]) == rec_id), None)
+        if not found_meta:
+            raise ValueError(f"Record '{rec_id}' not found in genuine cohort inventory.")
+
+        current_ids = self.get_monitored_record_ids()
+        if rec_id in current_ids:
+            raise ValueError(f"Record '{rec_id}' is already present in the active monitored cohort.")
+
+        current_ids.append(rec_id)
+        self._save_monitored_record_ids(current_ids)
+        print(f"[Repository] Added record {rec_id} to active monitored cohort (Total: {len(current_ids)})")
+        return found_meta
 
     def get_patients_overview(self, window_index: int = 0) -> List[Dict[str, Any]]:
         patients = []
@@ -194,7 +282,7 @@ class LocalJSONRepository(CareMindBaseRepository):
 class SupabaseRepository(CareMindBaseRepository):
     """Supabase PostgreSQL repository implementation using Supabase Python Client SDK."""
 
-    def __init__(self, db_config: Optional[DatabaseConfig] = None, auto_sync: bool = True):
+    def __init__(self, db_config: Optional[DatabaseConfig] = None, auto_sync: bool = False):
         self.config = db_config or DatabaseConfig()
         if not SUPABASE_SDK_AVAILABLE:
             raise ImportError("supabase python SDK is not installed.")
@@ -215,18 +303,41 @@ class SupabaseRepository(CareMindBaseRepository):
         sync_engine = MIMICCohortSyncEngine(db_config=self.config, client=self.client)
         return sync_engine.sync_cohort_to_supabase(source_cohort)
 
-    def get_available_records(self) -> List[Dict[str, Any]]:
+    def get_inventory_records(self) -> List[Dict[str, Any]]:
+        """Return all genuine records from inventory."""
+        return self.local_fallback.get_inventory_records()
+
+    def get_monitored_record_ids(self) -> List[str]:
+        """Return list of record IDs currently monitored."""
+        return self.local_fallback.get_monitored_record_ids()
+
+    def get_unmonitored_records(self) -> List[Dict[str, Any]]:
+        """Return genuine records from inventory not currently in monitored cohort."""
+        return self.local_fallback.get_unmonitored_records()
+
+    def is_record_monitored(self, record_id: str) -> bool:
+        """Check if record_id is currently monitored."""
+        return self.local_fallback.is_record_monitored(record_id)
+
+    def add_patient_to_cohort(self, record_id: str) -> Dict[str, Any]:
+        """Add a genuine record to the active monitored cohort and synchronize with Supabase."""
+        meta = self.local_fallback.add_patient_to_cohort(record_id)
+        # Synchronize operational metadata with Supabase if client available (without shrinking)
         try:
-            res = self.client.table("waveform_records").select("*").execute()
-            if res.data and len(res.data) > 0:
-                print(f"[Repository] Using Supabase ({len(res.data)} operational records)")
-                return res.data
+            from src.db.cohort_sync import MIMICCohortSyncEngine
+            sync_engine = MIMICCohortSyncEngine(db_config=self.config, client=self.client)
+            sync_engine.sync_cohort_to_supabase([meta], deactivate_obsolete=False)
+            print(f"[Repository] Synchronized added record {record_id} to Supabase")
         except Exception as err:
             err_msg = str(err)
             if "42501" in err_msg or "permission denied" in err_msg.lower():
                 print(f"[Repository] Supabase permission error (42501) — using LocalJSON fallback ({err_msg})")
             else:
-                print(f"[Repository] Supabase notice: {err} — using LocalJSON fallback")
+                print(f"[Repository] Supabase synchronization notice: {err_msg} — preserved LocalJSON fallback")
+        return meta
+
+    def get_available_records(self) -> List[Dict[str, Any]]:
+        # Align with active operational cohort
         return self.local_fallback.get_available_records()
 
     def get_patients_overview(self, window_index: int = 0) -> List[Dict[str, Any]]:
@@ -321,7 +432,7 @@ def get_repository() -> CareMindBaseRepository:
     config = DatabaseConfig()
     if config.is_supabase_configured and SUPABASE_SDK_AVAILABLE:
         try:
-            return SupabaseRepository(config)
+            return SupabaseRepository(config, auto_sync=False)
         except Exception as err:
             print(f"[Repository] Supabase initialization notice: {err} — using LocalJSON fallback")
     else:
