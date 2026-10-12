@@ -56,6 +56,19 @@ class AddPatientRequest(BaseModel):
     record_id: str
 
 
+class RegisterPatientRequest(BaseModel):
+    name: str
+    patient_id: str
+    age: Optional[int] = None
+    sex: Optional[str] = None
+    bed_id: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class RemovePatientRequest(BaseModel):
+    record_id: str
+
+
 def load_cached_record(record_id: str) -> Dict[str, Any]:
     """Helper to load pre-analyzed real record data from local cache if present."""
     cache_path = os.path.join(DATA_DIR, f"{record_id}.json")
@@ -137,6 +150,100 @@ def add_patient_record(req: AddPatientRequest):
         "status": "success",
         "message": f"Patient #{record_meta.get('subject_id')} (Record {rec_id}) successfully enrolled into monitored cohort.",
         "record": record_meta,
+        "monitored_patient_count": active_count
+    }
+
+
+@app.get("/api/patients/registered")
+def get_registered_patients():
+    """
+    GET /api/patients/registered
+    Returns list of manually registered patients without connected physiological data.
+    """
+    patients = db_repository.get_registered_patients()
+    return {"status": "success", "count": len(patients), "patients": patients}
+
+
+@app.post("/api/patients/register")
+def register_patient_endpoint(req: RegisterPatientRequest):
+    """
+    POST /api/patients/register
+    Registers a new patient profile manually without attaching physiological dataset records.
+    Validates required fields, enforces uniqueness of patient_id, and marks status as
+    'Registered — No Data Source Connected'.
+    """
+    name = (req.name or "").strip()
+    patient_id = (req.patient_id or "").strip()
+
+    if not name:
+        raise HTTPException(status_code=400, detail="Patient name is required.")
+    if not patient_id:
+        raise HTTPException(status_code=400, detail="Patient ID is required.")
+
+    patient_data = {
+        "name": name,
+        "patient_id": patient_id,
+        "age": req.age,
+        "sex": (req.sex or "").strip(),
+        "bed_id": (req.bed_id or "").strip(),
+        "notes": (req.notes or "").strip()
+    }
+
+    try:
+        registered = db_repository.register_patient(patient_data)
+    except ValueError as ve:
+        err_msg = str(ve)
+        if "already registered" in err_msg or "conflicts" in err_msg:
+            raise HTTPException(status_code=409, detail=err_msg)
+        raise HTTPException(status_code=400, detail=err_msg)
+    except Exception as err:
+        raise HTTPException(status_code=500, detail=f"Failed to register patient: {err}")
+
+    return {
+        "status": "success",
+        "message": "Patient registered successfully. Physiological data is not connected, so AI risk monitoring is currently unavailable.",
+        "patient": registered
+    }
+
+
+@app.post("/api/multimodal/patients/remove")
+def remove_patient_endpoint(req: RemovePatientRequest):
+    """
+    POST /api/multimodal/patients/remove
+    Removes a patient from the active monitored cohort.
+    Updates the repository active cohort, removes from simulation engine,
+    clears active alerts, and preserves original dataset records and history.
+    """
+    rec_id = (req.record_id or "").strip()
+    if not rec_id:
+        raise HTTPException(status_code=400, detail="record_id is required.")
+
+    # Check if patient is monitored or registered
+    is_monitored = db_repository.is_record_monitored(rec_id) or rec_id in simulation_engine.patient_states
+    is_registered = any(
+        str(p.get("patient_id", "")).strip().lower() == rec_id.lower() or str(p.get("subject_id", "")).strip().lower() == rec_id.lower()
+        for p in db_repository.get_registered_patients()
+    )
+
+    if not is_monitored and not is_registered:
+        raise HTTPException(status_code=404, detail=f"Patient '{rec_id}' not found in active monitored cohort or registered patients.")
+
+    try:
+        removed_meta = db_repository.remove_patient_from_cohort(rec_id)
+    except ValueError as ve:
+        raise HTTPException(status_code=404, detail=str(ve))
+    except Exception as err:
+        raise HTTPException(status_code=500, detail=f"Failed to remove patient: {err}")
+
+    # Remove from simulation engine & alert engine
+    simulation_engine.remove_patient_record(rec_id)
+
+    active_count = len(simulation_engine.patient_states)
+
+    return {
+        "status": "success",
+        "message": f"Patient '{rec_id}' successfully removed from active monitoring.",
+        "record_id": rec_id,
         "monitored_patient_count": active_count
     }
 

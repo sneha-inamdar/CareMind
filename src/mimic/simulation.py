@@ -183,6 +183,8 @@ class CareMindSimulationEngine:
                 "risk_trend_delta": p["risk_trend_delta"],
                 "risk_trend_status": p["risk_trend_status"],
                 "priority_status": p["priority_status"],
+                "monitoring_status": "Dataset Replay Active",
+                "is_monitored": True,
                 "vitals": p["clinical_features"],
                 "available_modalities": p["available_modalities"],
                 "primary_alert": p["contributing_factors"][0]["factor"] if p["contributing_factors"] else "Normal Parameters",
@@ -194,6 +196,8 @@ class CareMindSimulationEngine:
         # Rank patients descending by CareMind risk score
         patient_list.sort(key=lambda x: x["risk_score"], reverse=True)
 
+        registered = self.repository.get_registered_patients() if hasattr(self.repository, "get_registered_patients") else []
+
         return {
             "status": "success",
             "is_running": self.is_running,
@@ -201,6 +205,8 @@ class CareMindSimulationEngine:
             "total_steps": self.total_steps,
             "patient_count": len(patient_list),
             "patients": patient_list,
+            "registered_patients": registered,
+            "registered_patient_count": len(registered),
             "active_alerts": self.alert_engine.get_all_active_alerts()
         }
 
@@ -281,4 +287,23 @@ class CareMindSimulationEngine:
         patient_state["active_alerts"] = alerts
         self.patient_states[rec_id] = patient_state
         return patient_state
+
+    def remove_patient_record(self, record_id: str) -> bool:
+        """
+        Dynamically remove a patient from the running simulation state,
+        clear their active alerts, and update the roster without restarting the simulation.
+        """
+        rec_str = str(record_id).strip()
+        removed = False
+        target_keys = []
+        for r_id, p in list(self.patient_states.items()):
+            if str(r_id).strip() == rec_str or str(p.get("subject_id", "")).strip() == rec_str or str(p.get("record_id", "")).strip() == rec_str:
+                target_keys.append(r_id)
+
+        for k in target_keys:
+            del self.patient_states[k]
+            removed = True
+
+        self.alert_engine.remove_patient_alerts(rec_str)
+        return removed
 

@@ -535,6 +535,12 @@
       border-color: var(--border-color);
     }
 
+    .patient-priority-card.status-unmonitored {
+      background-color: var(--bg-card);
+      border-color: #cbd5e1;
+      border-left: 4px solid #94a3b8;
+    }
+
     .patient-id-block h3 {
       font-size: 16px;
       font-weight: 700;
@@ -1293,6 +1299,69 @@
       margin-bottom: 4px;
     }
 
+    .modal-tab-switcher {
+      display: flex;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--bg-subtle);
+    }
+
+    .modal-tab-btn {
+      flex: 1;
+      padding: 12px 16px;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: var(--transition-fast);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .modal-tab-btn:hover {
+      color: var(--text-main);
+      background: rgba(0, 0, 0, 0.02);
+    }
+
+    .modal-tab-btn.active {
+      color: var(--brand-blue);
+      border-bottom-color: var(--brand-blue);
+      background: var(--bg-card);
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .form-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .form-input {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      color: var(--text-main);
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      transition: var(--transition-fast);
+    }
+
+    .form-input:focus {
+      border-color: var(--brand-blue);
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+    }
+
     .toast-notification {
       position: fixed;
       bottom: 24px;
@@ -1833,6 +1902,7 @@
         </div>
 
         <div style="display: flex; align-items: center; gap: 12px;">
+          <button class="btn btn-sm btn-secondary" id="btnRemoveFromDetail" style="color: #dc2626; border-color: #fca5a5; background: #fff5f5;" title="Remove this patient from active monitoring">✕ Remove from Monitoring</button>
           <div class="priority-pill pill-critical" id="detailPriorityBadge">CRITICAL PRIORITY</div>
           <span class="font-mono" style="font-size: 12px; color: var(--text-muted);" id="detailTimestampTag">Window 1 •
             T+00:00</span>
@@ -2022,22 +2092,109 @@
 
   </main>
 
-  <!-- MODAL: ADD PATIENT FROM GENUINE COHORT -->
+  <!-- MODAL: ADD PATIENT (OPTION A: MANUAL REGISTRATION, OPTION B: COHORT SELECTION) -->
   <div id="addPatientModal" class="modal-backdrop" style="display: none;">
-    <div class="modal-card">
+    <div class="modal-card" style="max-width: 600px;">
       <div class="modal-header">
         <div class="modal-title-group">
-          <h3>Add Monitored Patient</h3>
-          <p>Select an available genuine cohort record from CareMind's MIMIC-IV cohort inventory</p>
+          <h3>Add Patient</h3>
+          <p>Register a new patient or select from genuine MIMIC cohort records</p>
         </div>
         <button class="modal-close-btn" id="btnCloseAddPatientModal" aria-label="Close modal">&times;</button>
       </div>
-      <div class="modal-body" id="availableRecordsList">
-        <!-- Dynamically rendered genuine records or empty state -->
+
+      <!-- MODAL OPTION SEGMENTED SWITCHER -->
+      <div class="modal-tab-switcher">
+        <button class="modal-tab-btn active" id="tabOptionManual">Option A: Register Manually</button>
+        <button class="modal-tab-btn" id="tabOptionCohort">Option B: Select from Available Cohort</button>
       </div>
+
+      <!-- OPTION A BODY: MANUAL REGISTRATION FORM -->
+      <div class="modal-body" id="bodyOptionManual">
+        <div style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 2px;">
+          Register a new patient independently of dataset records.
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="regPatientName">Patient Full Name <span style="color: var(--critical-badge);">*</span></label>
+          <input type="text" id="regPatientName" class="form-input" placeholder="e.g. Jane Doe" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="regPatientId">Patient ID <span style="color: var(--critical-badge);">*</span></label>
+          <input type="text" id="regPatientId" class="form-input font-mono" placeholder="e.g. PT-10492" required />
+          <span style="font-size: 11px; color: var(--text-muted);">Unique identifier across the operational roster.</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label class="form-label" for="regPatientAge">Age (Years)</label>
+            <input type="number" id="regPatientAge" class="form-input" placeholder="e.g. 58" min="0" max="130" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="regPatientSex">Sex</label>
+            <select id="regPatientSex" class="form-input">
+              <option value="">Unspecified</option>
+              <option value="Female">Female</option>
+              <option value="Male">Male</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="regPatientBed">Bed / Ward Assignment</label>
+          <input type="text" id="regPatientBed" class="form-input" placeholder="e.g. Bed ICU-07" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="regPatientNotes">Clinical Notes</label>
+          <textarea id="regPatientNotes" class="form-input" rows="2" placeholder="e.g. Admitted for observation; pending telemetry connection..."></textarea>
+        </div>
+        <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 10px 14px; font-size: 11.5px; color: #1e40af; line-height: 1.4;">
+          ℹ️ <strong>Status Notice:</strong> This patient will be registered as <em>"Registered — No Data Source Connected"</em>. AI risk scores and waveforms require connected bedside telemetry.
+        </div>
+      </div>
+
+      <!-- OPTION B BODY: GENUINE COHORT RECORD SELECTION -->
+      <div class="modal-body" id="bodyOptionCohort" style="display: none;">
+        <div style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 2px;">
+          Select an available genuine cohort record from CareMind's MIMIC-IV cohort inventory:
+        </div>
+        <div id="availableRecordsList" style="display: flex; flex-direction: column; gap: 10px;">
+          <!-- Dynamically rendered genuine records or empty state -->
+        </div>
+      </div>
+
       <div class="modal-footer">
         <button class="btn btn-secondary" id="btnCancelAddPatient">Cancel</button>
-        <button class="btn btn-primary" id="btnConfirmAddPatient" disabled>Confirm &amp; Add Patient</button>
+        <button class="btn btn-primary" id="btnSubmitManualRegister">Register Patient</button>
+        <button class="btn btn-primary" id="btnConfirmAddPatient" style="display: none;" disabled>Confirm &amp; Add to Monitoring</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CONFIRM REMOVE PATIENT FROM ACTIVE MONITORING -->
+  <div id="removePatientModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-card" style="max-width: 480px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h3 style="color: #991b1b;">Remove patient from monitoring?</h3>
+          <p id="removePatientModalSubtitle">Confirm deactivation from active ICU monitoring roster</p>
+        </div>
+        <button class="modal-close-btn" id="btnCloseRemoveModal" aria-label="Close modal">&times;</button>
+      </div>
+      <div class="modal-body" style="gap: 14px;">
+        <p style="font-size: 13px; color: var(--text-main); line-height: 1.5;">
+          Are you sure you want to remove <strong id="removePatientTargetName">this patient</strong> from active monitoring?
+        </p>
+        <div style="background: var(--bg-subtle); border-radius: 8px; padding: 12px 16px; border: 1px solid var(--border-color); font-size: 12px; line-height: 1.6; color: var(--text-secondary);">
+          <ul style="margin: 0; padding-left: 18px;">
+            <li>The patient will leave the active monitored roster.</li>
+            <li>Their original dataset record will remain in the source inventory.</li>
+            <li>Historical records and audit information should be preserved where supported.</li>
+            <li>The patient can be added back to monitoring if their record remains available.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="btnCancelRemovePatient">Cancel</button>
+        <button class="btn btn-primary" id="btnConfirmRemovePatient" style="background: #dc2626; border-color: #b91c1c;">Remove from Monitoring</button>
       </div>
     </div>
   </div>
@@ -2102,6 +2259,26 @@
     const btnCancelAddPatient = document.getElementById('btnCancelAddPatient');
     const btnConfirmAddPatient = document.getElementById('btnConfirmAddPatient');
     const availableRecordsList = document.getElementById('availableRecordsList');
+    const tabOptionManual = document.getElementById('tabOptionManual');
+    const tabOptionCohort = document.getElementById('tabOptionCohort');
+    const bodyOptionManual = document.getElementById('bodyOptionManual');
+    const bodyOptionCohort = document.getElementById('bodyOptionCohort');
+    const btnSubmitManualRegister = document.getElementById('btnSubmitManualRegister');
+    const regPatientName = document.getElementById('regPatientName');
+    const regPatientId = document.getElementById('regPatientId');
+    const regPatientAge = document.getElementById('regPatientAge');
+    const regPatientSex = document.getElementById('regPatientSex');
+    const regPatientBed = document.getElementById('regPatientBed');
+    const regPatientNotes = document.getElementById('regPatientNotes');
+
+    // Remove Confirmation Modal
+    const removePatientModal = document.getElementById('removePatientModal');
+    const removePatientTargetName = document.getElementById('removePatientTargetName');
+    const btnCloseRemoveModal = document.getElementById('btnCloseRemoveModal');
+    const btnCancelRemovePatient = document.getElementById('btnCancelRemovePatient');
+    const btnConfirmRemovePatient = document.getElementById('btnConfirmRemovePatient');
+    const btnRemoveFromDetail = document.getElementById('btnRemoveFromDetail');
+    let patientPendingRemoval = null;
 
     // Simulation Controls
     const btnToggleSim = document.getElementById('btnToggleSim');
@@ -2315,20 +2492,108 @@
       });
     }
 
-    // ADD PATIENT MODAL WORKFLOW
+    // ADD PATIENT & REMOVAL MODAL WORKFLOW
+    function switchAddModalTab(mode) {
+      if (mode === 'cohort') {
+        if (tabOptionCohort) tabOptionCohort.classList.add('active');
+        if (tabOptionManual) tabOptionManual.classList.remove('active');
+        if (bodyOptionCohort) bodyOptionCohort.style.display = 'block';
+        if (bodyOptionManual) bodyOptionManual.style.display = 'none';
+        if (btnSubmitManualRegister) btnSubmitManualRegister.style.display = 'none';
+        if (btnConfirmAddPatient) btnConfirmAddPatient.style.display = 'inline-flex';
+        fetchAvailableGenuineRecords();
+      } else {
+        if (tabOptionManual) tabOptionManual.classList.add('active');
+        if (tabOptionCohort) tabOptionCohort.classList.remove('active');
+        if (bodyOptionManual) bodyOptionManual.style.display = 'flex';
+        if (bodyOptionCohort) bodyOptionCohort.style.display = 'none';
+        if (btnSubmitManualRegister) btnSubmitManualRegister.style.display = 'inline-flex';
+        if (btnConfirmAddPatient) btnConfirmAddPatient.style.display = 'none';
+      }
+    }
+
     function openAddPatientModal() {
       if (!addPatientModal) return;
       selectedRecordToAdd = null;
-      btnConfirmAddPatient.disabled = true;
-      btnConfirmAddPatient.innerText = 'Confirm & Add Patient';
+      if (regPatientName) regPatientName.value = '';
+      if (regPatientId) regPatientId.value = '';
+      if (regPatientAge) regPatientAge.value = '';
+      if (regPatientSex) regPatientSex.value = '';
+      if (regPatientBed) regPatientBed.value = '';
+      if (regPatientNotes) regPatientNotes.value = '';
+      if (btnSubmitManualRegister) {
+        btnSubmitManualRegister.disabled = false;
+        btnSubmitManualRegister.innerText = 'Register Patient';
+      }
+      if (btnConfirmAddPatient) {
+        btnConfirmAddPatient.disabled = true;
+        btnConfirmAddPatient.innerText = 'Confirm & Add to Monitoring';
+      }
+      switchAddModalTab('manual');
       addPatientModal.style.display = 'flex';
-      fetchAvailableGenuineRecords();
     }
 
     function closeAddPatientModal() {
       if (!addPatientModal) return;
       addPatientModal.style.display = 'none';
       selectedRecordToAdd = null;
+    }
+
+    async function submitManualRegistration() {
+      const name = regPatientName ? regPatientName.value.trim() : '';
+      const patientId = regPatientId ? regPatientId.value.trim() : '';
+
+      if (!name) {
+        showToast('Patient name is required.', 'error');
+        if (regPatientName) regPatientName.focus();
+        return;
+      }
+      if (!patientId) {
+        showToast('Patient ID is required.', 'error');
+        if (regPatientId) regPatientId.focus();
+        return;
+      }
+
+      btnSubmitManualRegister.disabled = true;
+      btnSubmitManualRegister.innerText = 'Registering...';
+
+      try {
+        const payload = {
+          name: name,
+          patient_id: patientId,
+          age: regPatientAge && regPatientAge.value ? parseInt(regPatientAge.value) : null,
+          sex: regPatientSex ? regPatientSex.value.trim() : null,
+          bed_id: regPatientBed ? regPatientBed.value.trim() : null,
+          notes: regPatientNotes ? regPatientNotes.value.trim() : null
+        };
+
+        const res = await fetch('/api/patients/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          if (res.status === 409) {
+            showToast(data.detail || `Patient ID '${patientId}' already exists.`, 'error');
+          } else {
+            showToast(data.detail || 'Failed to register patient.', 'error');
+          }
+          btnSubmitManualRegister.disabled = false;
+          btnSubmitManualRegister.innerText = 'Register Patient';
+          return;
+        }
+
+        closeAddPatientModal();
+        showToast("Patient registered successfully. Physiological data is not connected, so AI risk monitoring is currently unavailable.");
+        await fetchSimState();
+      } catch (err) {
+        console.error('Registration error:', err);
+        showToast(`Registration failed: ${err.message}`, 'error');
+        btnSubmitManualRegister.disabled = false;
+        btnSubmitManualRegister.innerText = 'Register Patient';
+      }
     }
 
     async function fetchAvailableGenuineRecords() {
@@ -2446,7 +2711,7 @@
             showToast(data.detail || 'Failed to add patient to cohort.', 'error');
           }
           btnConfirmAddPatient.disabled = false;
-          btnConfirmAddPatient.innerText = 'Confirm & Add Patient';
+          btnConfirmAddPatient.innerText = 'Confirm & Add to Monitoring';
           return;
         }
 
@@ -2459,7 +2724,67 @@
         console.error('Error confirming patient addition:', err);
         showToast(`Network or server error: ${err.message}`, 'error');
         btnConfirmAddPatient.disabled = false;
-        btnConfirmAddPatient.innerText = 'Confirm & Add Patient';
+        btnConfirmAddPatient.innerText = 'Confirm & Add to Monitoring';
+      }
+    }
+
+    // Removal Modal Handlers
+    function promptRemovePatient(recordId, displayName) {
+      patientPendingRemoval = { recordId: String(recordId), displayName: displayName || recordId };
+      if (removePatientTargetName) {
+        removePatientTargetName.innerText = displayName || `Patient #${recordId}`;
+      }
+      if (btnConfirmRemovePatient) {
+        btnConfirmRemovePatient.disabled = false;
+        btnConfirmRemovePatient.innerText = 'Remove from Monitoring';
+      }
+      if (removePatientModal) {
+        removePatientModal.style.display = 'flex';
+      }
+    }
+
+    function closeRemoveModal() {
+      if (removePatientModal) {
+        removePatientModal.style.display = 'none';
+      }
+      patientPendingRemoval = null;
+    }
+
+    async function confirmRemovePatientAction() {
+      if (!patientPendingRemoval) return;
+      const recId = patientPendingRemoval.recordId;
+      btnConfirmRemovePatient.disabled = true;
+      btnConfirmRemovePatient.innerText = 'Removing...';
+
+      try {
+        const res = await fetch('/api/multimodal/patients/remove', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ record_id: recId })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          showToast(data.detail || 'Failed to remove patient from monitoring.', 'error');
+          btnConfirmRemovePatient.disabled = false;
+          btnConfirmRemovePatient.innerText = 'Remove from Monitoring';
+          return;
+        }
+
+        closeRemoveModal();
+        showToast(data.message || `Patient removed from active monitoring.`);
+
+        if (String(currentDetailRecordId) === String(recId)) {
+          showTab(lastActiveTab || 'patients');
+          currentDetailRecordId = null;
+        }
+
+        await fetchSimState();
+      } catch (err) {
+        console.error('Removal error:', err);
+        showToast(`Failed to remove patient: ${err.message}`, 'error');
+        btnConfirmRemovePatient.disabled = false;
+        btnConfirmRemovePatient.innerText = 'Remove from Monitoring';
       }
     }
 
@@ -2468,9 +2793,29 @@
     if (btnCloseAddPatientModal) btnCloseAddPatientModal.addEventListener('click', closeAddPatientModal);
     if (btnCancelAddPatient) btnCancelAddPatient.addEventListener('click', closeAddPatientModal);
     if (btnConfirmAddPatient) btnConfirmAddPatient.addEventListener('click', confirmAddPatient);
+    if (tabOptionManual) tabOptionManual.addEventListener('click', () => switchAddModalTab('manual'));
+    if (tabOptionCohort) tabOptionCohort.addEventListener('click', () => switchAddModalTab('cohort'));
+    if (btnSubmitManualRegister) btnSubmitManualRegister.addEventListener('click', submitManualRegistration);
+
+    if (btnCloseRemoveModal) btnCloseRemoveModal.addEventListener('click', closeRemoveModal);
+    if (btnCancelRemovePatient) btnCancelRemovePatient.addEventListener('click', closeRemoveModal);
+    if (btnConfirmRemovePatient) btnConfirmRemovePatient.addEventListener('click', confirmRemovePatientAction);
+    if (btnRemoveFromDetail) {
+      btnRemoveFromDetail.addEventListener('click', () => {
+        if (currentDetailRecordId) {
+          promptRemovePatient(currentDetailRecordId, detailPatientTitle.innerText);
+        }
+      });
+    }
+
     if (addPatientModal) {
       addPatientModal.addEventListener('click', (e) => {
         if (e.target === addPatientModal) closeAddPatientModal();
+      });
+    }
+    if (removePatientModal) {
+      removePatientModal.addEventListener('click', (e) => {
+        if (e.target === removePatientModal) closeRemoveModal();
       });
     }
 
@@ -2585,7 +2930,10 @@
     function renderPatientsDirectory(patients) {
       patientsDirectoryContainer.innerHTML = '';
 
-      let filtered = [...patients];
+      const registered = (simState && simState.registered_patients) || [];
+      const allPatients = [...patients, ...registered];
+
+      let filtered = [...allPatients];
 
       // 1. Search Query
       if (patientSearchQuery) {
@@ -2594,25 +2942,30 @@
           const rid = String(p.record_id || '').toLowerCase();
           const stay = String(p.stay_id || '').toLowerCase();
           const bed = String(p.bed_id || '').toLowerCase();
+          const name = String(p.name || '').toLowerCase();
+          const pid = String(p.patient_id || '').toLowerCase();
           return sid.includes(patientSearchQuery) ||
                  rid.includes(patientSearchQuery) ||
                  stay.includes(patientSearchQuery) ||
-                 bed.includes(patientSearchQuery);
+                 bed.includes(patientSearchQuery) ||
+                 name.includes(patientSearchQuery) ||
+                 pid.includes(patientSearchQuery);
         });
       }
 
       // 2. Priority Filter
       if (currentPatientFilter === 'CRITICAL') {
-        filtered = filtered.filter(p => p.priority_status === 'CRITICAL_PRIORITY' || p.risk_category === 'HIGH' || p.risk_score >= 75);
+        filtered = filtered.filter(p => p.is_monitored !== false && (p.priority_status === 'CRITICAL_PRIORITY' || p.risk_category === 'HIGH' || p.risk_score >= 75));
       } else if (currentPatientFilter === 'HIGH') {
-        filtered = filtered.filter(p => p.priority_status === 'HIGH_PRIORITY' || p.risk_category === 'MEDIUM' || (p.risk_score >= 50 && p.risk_score < 75));
+        filtered = filtered.filter(p => p.is_monitored !== false && (p.priority_status === 'HIGH_PRIORITY' || p.risk_category === 'MEDIUM' || (p.risk_score >= 50 && p.risk_score < 75)));
       } else if (currentPatientFilter === 'ROUTINE') {
-        filtered = filtered.filter(p => p.priority_status === 'ROUTINE_MONITORING' || (p.risk_category === 'LOW' && p.risk_score < 50));
+        filtered = filtered.filter(p => p.is_monitored !== false && (p.priority_status === 'ROUTINE_MONITORING' || (p.risk_category === 'LOW' && p.risk_score < 50)));
       }
 
       // 3. Modality Filter
       if (currentModalityFilter !== 'ALL') {
         filtered = filtered.filter(p => {
+          if (p.is_monitored === false) return false;
           const mods = (p.available_modalities || []).map(m => String(m).toUpperCase());
           if (currentModalityFilter === 'ECG') return mods.some(m => m.includes('ECG'));
           if (currentModalityFilter === 'PPG') return mods.some(m => m.includes('PPG'));
@@ -2625,6 +2978,7 @@
       // 4. Trend Filter
       if (currentTrendFilter !== 'ALL') {
         filtered = filtered.filter(p => {
+          if (p.is_monitored === false) return false;
           if (currentTrendFilter === 'ESCALATING') return p.risk_trend_status === 'ESCALATING' || (p.risk_trend_delta && p.risk_trend_delta > 0);
           if (currentTrendFilter === 'STABLE') return p.risk_trend_status === 'STABLE' || (!p.risk_trend_delta || p.risk_trend_delta === 0);
           if (currentTrendFilter === 'IMPROVING') return p.risk_trend_status === 'IMPROVING' || (p.risk_trend_delta && p.risk_trend_delta < 0);
@@ -2634,39 +2988,62 @@
 
       // 5. Sorting
       filtered.sort((a, b) => {
+        const aMon = a.is_monitored !== false;
+        const bMon = b.is_monitored !== false;
+
         if (currentSortOrder === 'RISK_ASC') {
-          return a.risk_score - b.risk_score;
+          if (aMon && bMon) return a.risk_score - b.risk_score;
+          if (aMon) return -1;
+          if (bMon) return 1;
+          return 0;
         } else if (currentSortOrder === 'SUBJECT_ASC') {
-          return String(a.subject_id || '').localeCompare(String(b.subject_id || ''), undefined, { numeric: true });
+          const aId = String(a.subject_id || a.patient_id || '');
+          const bId = String(b.subject_id || b.patient_id || '');
+          return aId.localeCompare(bId, undefined, { numeric: true });
         } else if (currentSortOrder === 'RECORD_ASC') {
-          return String(a.record_id || '').localeCompare(String(b.record_id || ''), undefined, { numeric: true });
+          const aId = String(a.record_id || a.patient_id || '');
+          const bId = String(b.record_id || b.patient_id || '');
+          return aId.localeCompare(bId, undefined, { numeric: true });
         } else if (currentSortOrder === 'TREND') {
-          const rank = { 'ESCALATING': 3, 'STABLE': 2, 'IMPROVING': 1 };
-          const rankA = rank[a.risk_trend_status] || 0;
-          const rankB = rank[b.risk_trend_status] || 0;
-          if (rankA !== rankB) return rankB - rankA;
-          return b.risk_score - a.risk_score;
+          if (aMon && bMon) {
+            const rank = { 'ESCALATING': 3, 'STABLE': 2, 'IMPROVING': 1 };
+            const rankA = rank[a.risk_trend_status] || 0;
+            const rankB = rank[b.risk_trend_status] || 0;
+            if (rankA !== rankB) return rankB - rankA;
+            return b.risk_score - a.risk_score;
+          }
+          if (aMon) return -1;
+          if (bMon) return 1;
+          return 0;
         } else {
           // PRIORITY_DESC (default)
-          return b.risk_score - a.risk_score;
+          if (aMon && bMon) return b.risk_score - a.risk_score;
+          if (aMon) return -1;
+          if (bMon) return 1;
+          return 0;
         }
       });
 
       // Update subtitle and roster tag
       const hasFilterActive = currentPatientFilter !== 'ALL' || currentModalityFilter !== 'ALL' || currentTrendFilter !== 'ALL' || patientSearchQuery !== '';
       if (hasFilterActive) {
-        patientsSubtitleTag.innerHTML = `Showing <strong style="color: var(--brand-blue);">${filtered.length} of ${patients.length}</strong> monitored patients matching management criteria.`;
+        patientsSubtitleTag.innerHTML = `Showing <strong style="color: var(--brand-blue);">${filtered.length} of ${allPatients.length}</strong> patients matching management criteria.`;
       } else {
-        patientsSubtitleTag.innerText = `Showing all ${patients.length} active MIMIC ICU beds.`;
+        const regCount = registered.length;
+        if (regCount > 0) {
+          patientsSubtitleTag.innerText = `Showing ${patients.length} actively monitored ICU beds and ${regCount} registered patient profile${regCount > 1 ? 's' : ''} (no telemetry).`;
+        } else {
+          patientsSubtitleTag.innerText = `Showing all ${patients.length} active MIMIC ICU beds.`;
+        }
       }
-      patientsRosterCountTag.innerText = `${filtered.length} / ${patients.length} Monitored Patients`;
+      patientsRosterCountTag.innerText = `${filtered.length} / ${allPatients.length} Patients (${patients.length} Monitored)`;
 
       if (filtered.length === 0) {
         patientsDirectoryContainer.innerHTML = `
           <div class="empty-modal-state" style="padding: 40px 20px; background: var(--bg-card); border: 1px dashed var(--border-color); border-radius: 12px; margin-top: 10px; width: 100%;">
             <div class="empty-state-icon">🔍</div>
             <h4 style="font-size: 14px; font-weight: 700; color: var(--text-main);">No Matching Patients</h4>
-            <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">No monitored patients match your current search and filter criteria.</p>
+            <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">No patients match your current search and filter criteria.</p>
             <button class="btn btn-sm btn-secondary" style="margin-top: 12px;" onclick="resetAllFilters()">Reset All Filters</button>
           </div>
         `;
@@ -2681,6 +3058,64 @@
 
     // Patient Priority Card Generator
     function createPatientCard(p) {
+      // Check if patient is manually registered without data source
+      if (p.is_monitored === false || p.monitoring_status === 'Registered — No Data Source Connected') {
+        const card = document.createElement('div');
+        card.className = 'patient-priority-card status-unmonitored';
+        card.innerHTML = `
+          <div class="patient-id-block">
+            <h3>${p.bed_id || 'Unassigned Bed'}</h3>
+            <div class="patient-sub-text"><strong>${p.name || 'Registered Patient'}</strong> • ID: <span class="font-mono">${p.patient_id || p.subject_id}</span></div>
+            <div class="modality-chips">
+              <span class="chip" style="background: #f1f5f9; color: #475569; font-weight: 600;">Manual Registration</span>
+              <span class="chip" style="background: #fef2f2; color: #991b1b;">No Telemetry</span>
+            </div>
+          </div>
+
+          <div class="risk-score-box">
+            <div class="priority-pill" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;">NO DATA SOURCE</div>
+            <div class="score-badge-row" style="margin-top: 6px;">
+              <span class="score-number font-mono" style="color: #94a3b8;">—</span>
+              <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">/ 100 Risk</span>
+            </div>
+            <span class="trend-indicator" style="background: #f1f5f9; color: #64748b;">UNMONITORED</span>
+          </div>
+
+          <div class="card-vitals-grid font-mono" style="opacity: 0.65;">
+            <div class="vital-item">
+              <div class="vital-item-lbl">HR</div>
+              <div class="vital-item-val">—</div>
+              <div class="vital-item-unit">bpm</div>
+            </div>
+            <div class="vital-item">
+              <div class="vital-item-lbl">SpO₂</div>
+              <div class="vital-item-val">—</div>
+              <div class="vital-item-unit">%</div>
+            </div>
+            <div class="vital-item">
+              <div class="vital-item-lbl">RESP</div>
+              <div class="vital-item-val">—</div>
+              <div class="vital-item-unit">/min</div>
+            </div>
+            <div class="vital-item">
+              <div class="vital-item-lbl">MAP</div>
+              <div class="vital-item-val">—</div>
+              <div class="vital-item-unit">mmHg</div>
+            </div>
+          </div>
+
+          <div class="card-action-block">
+            <div style="font-size: 11px; color: #64748b; font-style: italic;">Registered — No Data Source Connected</div>
+            <div style="display: flex; gap: 6px; align-items: center;">
+              <button class="btn btn-secondary btn-sm" onclick="alert('Patient Profile: ${p.name || p.patient_id}\\nPatient ID: ${p.patient_id}\\nBed: ${p.bed_id || 'Unassigned Bed'}\\nAge/Sex: ${p.age || '—'} / ${p.sex || '—'}\\nNotes: ${p.notes || 'None'}\\n\\nStatus: Registered — No Data Source Connected\\nPhysiological data is not connected, so AI risk monitoring is currently unavailable.')">Profile</button>
+              <button class="btn btn-sm" style="color: #dc2626; border: 1px solid #fecaca; background: #fff5f5; padding: 4px 8px; font-size: 11px; border-radius: 6px; cursor: pointer;" title="Remove registered patient" onclick="promptRemovePatient('${p.patient_id}', '${p.name || p.patient_id}')">Remove</button>
+            </div>
+          </div>
+        `;
+        return card;
+      }
+
+      // Actively monitored patient
       const isCritical = p.priority_status === 'CRITICAL_PRIORITY' || p.risk_category === 'HIGH' || p.risk_score >= 75;
       const isHigh = p.priority_status === 'HIGH_PRIORITY' || p.risk_category === 'MEDIUM' || (p.risk_score >= 50 && !isCritical);
 
@@ -2751,7 +3186,10 @@
 
         <div class="card-action-block">
           ${p.active_alerts_count > 0 ? `<div class="alert-counter-badge">🔔 ${p.active_alerts_count} Active Alert${p.active_alerts_count > 1 ? 's' : ''}</div>` : '<div style="height:22px;"></div>'}
-          <button class="btn btn-secondary btn-sm" onclick="openPatientDetail('${p.record_id}')">Inspect Patient →</button>
+          <div style="display: flex; gap: 6px; align-items: center;">
+            <button class="btn btn-sm" style="color: #dc2626; border: 1px solid #fecaca; background: #fff5f5; padding: 4px 8px; font-size: 11px; border-radius: 6px; cursor: pointer;" title="Remove from monitoring" onclick="promptRemovePatient('${p.record_id}', '${p.bed_id || ('Patient #' + p.subject_id)}')">Remove</button>
+            <button class="btn btn-secondary btn-sm" onclick="openPatientDetail('${p.record_id}')">Inspect Patient →</button>
+          </div>
         </div>
       `;
       return card;
