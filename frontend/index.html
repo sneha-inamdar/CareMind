@@ -637,6 +637,230 @@
       color: var(--text-muted);
     }
 
+    /* ==========================================================================
+       INDIVIDUAL PHYSIOLOGICAL MODEL PREDICTIONS (SIGNAL-ALIGNED)
+       ========================================================================== */
+    .signal-prediction-slot {
+      margin-top: 6px;
+      margin-bottom: 6px;
+    }
+
+    .signal-pred-card {
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px 14px;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+      transition: var(--transition-fast);
+    }
+
+    .signal-pred-card.status-available {
+      border-left: 4px solid var(--ecg-line);
+      background: #fafdfb;
+    }
+
+    .signal-pred-card.status-unavailable {
+      border-left: 4px solid #cbd5e1;
+      background: #f8fafc;
+    }
+
+    .signal-pred-card.status-failed {
+      border-left: 4px solid var(--critical-badge);
+      background: var(--critical-bg);
+    }
+
+    .signal-pred-card.status-model-unavailable {
+      border-left: 4px solid var(--high-badge);
+      background: var(--high-bg);
+    }
+
+    .signal-pred-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .signal-pred-title-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .signal-pred-icon {
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .signal-pred-title {
+      font-size: 13px;
+      color: var(--text-main);
+    }
+
+    .signal-pred-title strong {
+      color: var(--text-main);
+      font-weight: 700;
+    }
+
+    .signal-pred-pills {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .modality-status-pill {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 12px;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .status-pill-available {
+      background: #dcfce7;
+      color: #15803d;
+      border: 1px solid #bbf7d0;
+    }
+
+    .status-pill-unavailable {
+      background: #f1f5f9;
+      color: #64748b;
+      border: 1px solid #e2e8f0;
+    }
+
+    .status-pill-failed {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fca5a5;
+    }
+
+    .status-pill-model-unavailable {
+      background: #fef3c7;
+      color: #b45309;
+      border: 1px solid #fde68a;
+    }
+
+    .pred-cat-pill {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 12px;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .cat-low {
+      background: #dcfce7;
+      color: #15803d;
+      border: 1px solid #bbf7d0;
+    }
+
+    .cat-medium {
+      background: #fef3c7;
+      color: #b45309;
+      border: 1px solid #fde68a;
+    }
+
+    .cat-high {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fca5a5;
+    }
+
+    .signal-pred-body {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .signal-pred-score-container {
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
+    }
+
+    .signal-pred-score-lbl {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .signal-pred-score-num {
+      font-size: 15px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .signal-pred-score-scale {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .signal-pred-explanation {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .signal-tech-details {
+      margin-top: 2px;
+      border-top: 1px dashed var(--border-color);
+      padding-top: 4px;
+    }
+
+    .signal-tech-summary {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      user-select: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      outline: none;
+    }
+
+    .signal-tech-summary:hover {
+      color: var(--brand-indigo);
+    }
+
+    .signal-tech-content {
+      margin-top: 6px;
+      padding: 8px 10px;
+      background: var(--bg-subtle);
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      font-size: 11px;
+      color: var(--text-secondary);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      line-height: 1.45;
+    }
+
+    .signal-tech-content strong {
+      color: var(--text-main);
+    }
+
+    .signal-tech-disclaimer {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-style: italic;
+      margin-top: 2px;
+    }
+
     /* Vitals Grid inside Card */
     .card-vitals-grid {
       display: grid;
@@ -1934,6 +2158,7 @@
                 </div>
                 <canvas id="ecgCanvas" class="waveform-canvas"></canvas>
               </div>
+              <div class="signal-prediction-slot" id="predSlotEcg"></div>
 
               <!-- PPG CHANNEL -->
               <div class="waveform-box" id="boxPpg">
@@ -1943,6 +2168,7 @@
                 </div>
                 <canvas id="ppgCanvas" class="waveform-canvas"></canvas>
               </div>
+              <div class="signal-prediction-slot" id="predSlotPpg"></div>
 
               <!-- ABP CHANNEL -->
               <div class="waveform-box" id="boxAbp">
@@ -1952,6 +2178,7 @@
                 </div>
                 <canvas id="abpCanvas" class="waveform-canvas"></canvas>
               </div>
+              <div class="signal-prediction-slot" id="predSlotAbp"></div>
 
               <!-- UNMONITORED CHANNELS BANNER -->
               <div class="unmonitored-badge" id="unmonitoredBanner" style="display: none;">
@@ -2009,6 +2236,9 @@
                   <div class="vital-tile-unit">mmHg</div>
                 </div>
               </div>
+
+              <!-- CLINICAL VITALS PREDICTION -->
+              <div class="signal-prediction-slot" id="predSlotClinical" style="margin-top: 14px;"></div>
             </div>
           </div>
 
@@ -3277,6 +3507,13 @@
     // Inspect Patient Detail View
     async function openPatientDetail(recordId) {
       currentDetailRecordId = String(recordId);
+      // Immediately reset individual predictions to prevent stale display when switching patients
+      ['predSlotEcg', 'predSlotPpg', 'predSlotAbp', 'predSlotClinical'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.innerHTML = '<div style="padding: 8px 12px; color: var(--text-muted); font-size: 12px; font-style: italic;">Evaluating observation window...</div>';
+        }
+      });
       showTab('detail');
       await loadPatientDetail(recordId);
     }
@@ -3301,6 +3538,152 @@
       } catch (err) {
         console.error('Failed to load patient detail:', err);
       }
+    }
+
+    function formatPredictionCard(modalityKey, pred, item) {
+      const status = pred.status || 'data_unavailable';
+      const isAvailable = (status === 'prediction_available');
+
+      let statusClass = 'status-unavailable';
+      let pillClass = 'status-pill-unavailable';
+      let pillText = 'Data Unavailable';
+
+      if (isAvailable) {
+        statusClass = 'status-available';
+        pillClass = 'status-pill-available';
+        pillText = 'Prediction Available';
+      } else if (status === 'model_unavailable') {
+        statusClass = 'status-model-unavailable';
+        pillClass = 'status-pill-model-unavailable';
+        pillText = 'Model Unavailable';
+      } else if (status === 'inference_failed') {
+        statusClass = 'status-failed';
+        pillClass = 'status-pill-failed';
+        pillText = 'Inference Failed';
+      }
+
+      let headlineLabel = 'Data unavailable';
+      if (isAvailable && pred.prediction) {
+        headlineLabel = pred.prediction;
+      } else if (status === 'model_unavailable') {
+        headlineLabel = 'Model unavailable';
+      } else if (status === 'inference_failed') {
+        headlineLabel = 'Inference failed';
+      }
+
+      const hasScore = (isAvailable && pred.score !== null && pred.score !== undefined);
+      const scoreNum = hasScore ? Number(pred.score) : null;
+      const scoreText = hasScore ? scoreNum.toFixed(1) : '—';
+
+      let categoryBadge = '';
+      let categoryInterpretation = '';
+      let scoreColor = 'var(--text-muted)';
+
+      if (hasScore) {
+        if (scoreNum < 50.0) {
+          categoryBadge = '<span class="pred-cat-pill cat-low">Low Instability</span>';
+          categoryInterpretation = 'Low observed physiological instability (&lt; 50/100)';
+          scoreColor = 'var(--ecg-line)';
+        } else if (scoreNum < 75.0) {
+          categoryBadge = '<span class="pred-cat-pill cat-medium">Moderate Instability</span>';
+          categoryInterpretation = 'Moderate physiological instability (50–74/100)';
+          scoreColor = 'var(--high-badge)';
+        } else {
+          categoryBadge = '<span class="pred-cat-pill cat-high">High Instability</span>';
+          categoryInterpretation = 'High physiological instability (≥ 75/100)';
+          scoreColor = 'var(--critical-badge)';
+        }
+      } else {
+        categoryInterpretation = pred.explanation || 'Signal is disconnected or unavailable for this observation window.';
+      }
+
+      let probsFormatted = '';
+      if (pred.class_probabilities && typeof pred.class_probabilities === 'object') {
+        const entries = Object.entries(pred.class_probabilities);
+        if (entries.length > 0) {
+          probsFormatted = entries
+            .map(([k, v]) => `${k.replace(/_/g, ' ')}: ${(v * 100).toFixed(1)}%`)
+            .join(' • ');
+        }
+      }
+
+      let featsFormatted = '';
+      if (pred.features_used && typeof pred.features_used === 'object') {
+        const fEntries = Object.entries(pred.features_used);
+        if (fEntries.length > 0) {
+          featsFormatted = fEntries.map(([k, v]) => `${k}: ${v}`).join(' • ');
+        }
+      }
+
+      let fusionDesc = '';
+      if (isAvailable) {
+        fusionDesc = pred.risk_contribution || `Late multimodal fusion (weight: ${(pred.fusion_weight !== undefined ? (pred.fusion_weight * 100).toFixed(0) : 50)}%)`;
+      } else {
+        fusionDesc = '0.0% (Excluded — missing signal does not contribute to multimodal fusion)';
+      }
+
+      return `
+        <div class="signal-pred-card ${statusClass}">
+          <div class="signal-pred-header">
+            <div class="signal-pred-title-group">
+              <span class="signal-pred-icon">${item.icon}</span>
+              <span class="signal-pred-title"><strong>${item.name}</strong> — ${headlineLabel}</span>
+            </div>
+            <div class="signal-pred-pills">
+              <span class="modality-status-pill ${pillClass}">${pillText}</span>
+              ${categoryBadge}
+            </div>
+          </div>
+
+          <div class="signal-pred-body">
+            <div class="signal-pred-score-container">
+              <span class="signal-pred-score-lbl">Instability Score:</span>
+              <span class="signal-pred-score-num" style="color: ${scoreColor};">${scoreText}</span>
+              ${hasScore ? '<span class="signal-pred-score-scale">/ 100</span>' : ''}
+            </div>
+            <div class="signal-pred-explanation">
+              ${categoryInterpretation}
+            </div>
+          </div>
+
+          <details class="signal-tech-details">
+            <summary class="signal-tech-summary">Technical details</summary>
+            <div class="signal-tech-content">
+              <div><strong>Model:</strong> ${pred.model_name || 'Modality Model'} ${pred.model_version ? 'v' + pred.model_version : ''}</div>
+              ${isAvailable && probsFormatted ? `<div><strong>Class Probabilities:</strong> ${probsFormatted}</div>` : ''}
+              ${isAvailable && featsFormatted ? `<div><strong>Features Used:</strong> ${featsFormatted}</div>` : ''}
+              <div><strong>Fusion Contribution:</strong> ${fusionDesc}</div>
+              <div><strong>Model Scope:</strong> ${pred.explanation || 'Signal physiological instability evaluation.'}</div>
+              <div class="signal-tech-disclaimer">${pred.clinical_disclaimer || 'Physiological decision-support indicator, not a diagnostic or mortality model.'}</div>
+            </div>
+          </details>
+        </div>
+      `;
+    }
+
+    function renderIndividualPredictions(data) {
+      const indiv = data.individual_predictions || {};
+      const modalities = [
+        { key: 'ecg', name: 'ECG', label: 'ECG Lead II', icon: '🫀', slotId: 'predSlotEcg' },
+        { key: 'ppg', name: 'PPG', label: 'PLETH / PPG Pulse Wave', icon: '🩸', slotId: 'predSlotPpg' },
+        { key: 'abp', name: 'ABP', label: 'Arterial Line ABP', icon: '🩺', slotId: 'predSlotAbp' },
+        { key: 'clinical', name: 'Clinical vitals', label: 'Observed Bedside Vitals', icon: '📋', slotId: 'predSlotClinical' }
+      ];
+
+      modalities.forEach(item => {
+        const slot = document.getElementById(item.slotId);
+        if (!slot) return;
+
+        const pred = indiv[item.key] || {
+          modality: item.name,
+          modality_name: item.label,
+          status: 'data_unavailable',
+          is_available: false,
+          explanation: 'Signal is disconnected or unavailable for this observation window.'
+        };
+
+        slot.innerHTML = formatPredictionCard(item.key, pred, item);
+      });
     }
 
     function renderPatientDetail(data) {
@@ -3367,6 +3750,9 @@
       valBP.innerText = `${Math.round(v.SysBP || 120)}/${Math.round(v.DiaBP || 75)}`;
       valMAP.innerText = Math.round(v.MAP || (v.SysBP ? Math.round((v.SysBP + 2 * v.DiaBP) / 3) : 88));
 
+      // Individual Model Predictions
+      renderIndividualPredictions(data);
+
       // Contributing Factors
       factorsContainer.innerHTML = '';
       (data.contributing_factors || []).forEach(f => {
@@ -3427,6 +3813,16 @@
       boxEcg.style.display = showEcg ? 'block' : 'none';
       boxPpg.style.display = showPpg ? 'block' : 'none';
       boxAbp.style.display = showAbp ? 'block' : 'none';
+
+      const predSlotEcg = document.getElementById('predSlotEcg');
+      const predSlotPpg = document.getElementById('predSlotPpg');
+      const predSlotAbp = document.getElementById('predSlotAbp');
+      const predSlotClinical = document.getElementById('predSlotClinical');
+
+      if (predSlotEcg) predSlotEcg.style.display = showEcg ? 'block' : 'none';
+      if (predSlotPpg) predSlotPpg.style.display = showPpg ? 'block' : 'none';
+      if (predSlotAbp) predSlotAbp.style.display = showAbp ? 'block' : 'none';
+      if (predSlotClinical) predSlotClinical.style.display = 'block';
 
       const unmonitored = [];
       if (!showEcg) unmonitored.push('ECG Lead II');

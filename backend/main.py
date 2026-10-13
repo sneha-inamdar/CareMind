@@ -335,9 +335,40 @@ def analyze_window(req: AnalyzeRequest):
         if "available_modalities" in cached:
             res["record_available_modalities"] = cached["available_modalities"]
 
+        if "individual_predictions" not in res:
+            res["individual_predictions"] = prototype_engine.get_individual_predictions_for_window(res)
+
         return res
 
     raise HTTPException(status_code=404, detail=f"No data available for record '{req.record_id}'.")
+
+
+@app.get("/api/multimodal/predictions/{record_id}")
+def get_individual_predictions(record_id: str, window_index: int = Query(0, ge=0, le=3)):
+    """
+    GET /api/multimodal/predictions/{record_id}?window_index=0
+    
+    Returns individual physiological model predictions (ECG, PPG, ABP, Clinical Vitals)
+    for the specified patient record and observation window.
+    """
+    cached = load_cached_record(record_id)
+    if not cached or "windows" not in cached or len(cached["windows"]) == 0:
+        raise HTTPException(status_code=404, detail=f"Record '{record_id}' not found or has no observation windows.")
+    
+    win_idx = min(window_index, len(cached["windows"]) - 1)
+    win_data = cached["windows"][win_idx]
+    predictions = prototype_engine.get_individual_predictions_for_window(win_data)
+    
+    return {
+        "status": "success",
+        "record_id": record_id,
+        "subject_id": cached.get("subject_id"),
+        "window_index": win_idx,
+        "timestamp": win_data.get("timestamp"),
+        "multimodal_risk_score": win_data.get("risk_score"),
+        "multimodal_risk_category": win_data.get("risk_category"),
+        "predictions": predictions
+    }
 
 
 @app.get("/api/multimodal/replay/{record_id}")

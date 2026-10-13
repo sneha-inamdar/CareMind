@@ -80,6 +80,7 @@ class CareMindSimulationEngine:
                 "available_modalities": meta.get("available_modalities") or w0.get("available_modalities", []),
                 "contributing_factors": w0.get("contributing_factors", []),
                 "cached_windows": cached_windows,
+                "individual_predictions": self.prototype.get_individual_predictions_for_window(w0),
                 "active_alerts": [],
                 "disclaimer": w0.get("disclaimer", "CareMind Physiological Risk Score is an engineering prototype decision-support metric.")
             }
@@ -159,6 +160,9 @@ class CareMindSimulationEngine:
                 risk_trend_delta=delta
             )
 
+            # Update individual model predictions for target window
+            p_state["individual_predictions"] = self.prototype.get_individual_predictions_for_window(target_window)
+
             # Evaluate alerts via AlertEngine
             alerts = self.alert_engine.evaluate_patient_alerts(p_state)
             p_state["active_alerts"] = alerts
@@ -187,6 +191,7 @@ class CareMindSimulationEngine:
                 "is_monitored": True,
                 "vitals": p["clinical_features"],
                 "available_modalities": p["available_modalities"],
+                "individual_predictions": p.get("individual_predictions", {}),
                 "primary_alert": p["contributing_factors"][0]["factor"] if p["contributing_factors"] else "Normal Parameters",
                 "contributing_factors": p["contributing_factors"],
                 "active_alerts_count": len(p["active_alerts"]),
@@ -279,6 +284,7 @@ class CareMindSimulationEngine:
             "available_modalities": w_curr.get("available_modalities", meta.get("available_modalities", [])),
             "contributing_factors": w_curr.get("contributing_factors", []),
             "cached_windows": cached_windows,
+            "individual_predictions": self.prototype.get_individual_predictions_for_window(w_curr),
             "active_alerts": [],
             "disclaimer": w_curr.get("disclaimer", "CareMind Physiological Risk Score is an engineering prototype decision-support metric.")
         }
