@@ -1078,6 +1078,46 @@
       display: block;
     }
 
+    .clinical-only-waveform-banner {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-left: 4px solid #3b82f6;
+      border-radius: 8px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      margin: 4px 0 10px 0;
+    }
+
+    .clinical-banner-icon {
+      color: #3b82f6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+
+    .clinical-banner-content {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .clinical-banner-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-main);
+      line-height: 1.4;
+    }
+
+    .clinical-banner-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
     .unmonitored-badge {
       background: var(--bg-subtle);
       border: 1px dashed var(--border-strong);
@@ -2180,6 +2220,21 @@
               </div>
               <div class="signal-prediction-slot" id="predSlotAbp"></div>
 
+              <!-- CLINICAL-ONLY WAVEFORM BANNER -->
+              <div class="clinical-only-waveform-banner" id="clinicalOnlyBanner" style="display: none;">
+                <div class="clinical-banner-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="16" x2="12" y2="12" />
+                    <line x1="12" y1="8" x2="12.01" y2="8" />
+                  </svg>
+                </div>
+                <div class="clinical-banner-content">
+                  <div class="clinical-banner-title">Waveform data unavailable for this patient. Clinical observations are still being monitored.</div>
+                  <div class="clinical-banner-sub">This patient is being monitored via bedside clinical observations. Continuous high-frequency arterial or telemetry waveforms are not connected for this observation window.</div>
+                </div>
+              </div>
+
               <!-- UNMONITORED CHANNELS BANNER -->
               <div class="unmonitored-badge" id="unmonitoredBanner" style="display: none;">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2545,6 +2600,7 @@
     const boxPpg = document.getElementById('boxPpg');
     const boxAbp = document.getElementById('boxAbp');
     const unmonitoredBanner = document.getElementById('unmonitoredBanner');
+    const clinicalOnlyBanner = document.getElementById('clinicalOnlyBanner');
     const unmonitoredListText = document.getElementById('unmonitoredListText');
 
     const ecgCtx = document.getElementById('ecgCanvas').getContext('2d');
@@ -3087,7 +3143,7 @@
       if (inFlightStep) return;
       inFlightStep = true;
       try {
-        const res = await fetch('/api/simulation/start', { method: 'POST' });
+        const res = await fetch('/api/simulation/reset', { method: 'POST' });
         if (res.ok) {
           simState = await res.json();
           renderDashboard();
@@ -3514,6 +3570,8 @@
           el.innerHTML = '<div style="padding: 8px 12px; color: var(--text-muted); font-size: 12px; font-style: italic;">Evaluating observation window...</div>';
         }
       });
+      if (clinicalOnlyBanner) clinicalOnlyBanner.style.display = 'none';
+      if (unmonitoredBanner) unmonitoredBanner.style.display = 'none';
       showTab('detail');
       await loadPatientDetail(recordId);
     }
@@ -3829,11 +3887,18 @@
       if (!showPpg) unmonitored.push('PPG / Pleth Pulse');
       if (!showAbp) unmonitored.push('Arterial Line (ABP)');
 
-      if (unmonitored.length > 0) {
-        unmonitoredBanner.style.display = 'flex';
-        unmonitoredListText.innerText = unmonitored.join(', ');
+      const isClinicalOnly = !showEcg && !showPpg && !showAbp;
+      if (isClinicalOnly) {
+        if (clinicalOnlyBanner) clinicalOnlyBanner.style.display = 'flex';
+        if (unmonitoredBanner) unmonitoredBanner.style.display = 'none';
       } else {
-        unmonitoredBanner.style.display = 'none';
+        if (clinicalOnlyBanner) clinicalOnlyBanner.style.display = 'none';
+        if (unmonitored.length > 0) {
+          unmonitoredBanner.style.display = 'flex';
+          unmonitoredListText.innerText = unmonitored.join(', ');
+        } else {
+          unmonitoredBanner.style.display = 'none';
+        }
       }
 
       if (showEcg && ecgSignal) drawWaveformSignal(ecgCtx, ecgSignal, '#059669');

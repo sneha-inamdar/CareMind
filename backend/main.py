@@ -335,6 +335,16 @@ def analyze_window(req: AnalyzeRequest):
         if "available_modalities" in cached:
             res["record_available_modalities"] = cached["available_modalities"]
 
+        # Synchronize live simulation fields if patient is enrolled in running simulation
+        rec_id_str = str(req.record_id).strip()
+        if rec_id_str in simulation_engine.patient_states:
+            p_sim = simulation_engine.patient_states[rec_id_str]
+            if win_idx == p_sim.get("window_index", 0):
+                res["risk_trend_delta"] = p_sim.get("risk_trend_delta", 0.0)
+                res["risk_trend_status"] = p_sim.get("risk_trend_status", "STABLE")
+                res["priority_status"] = p_sim.get("priority_status", res.get("priority_status"))
+                res["active_alerts"] = p_sim.get("active_alerts", [])
+
         if "individual_predictions" not in res:
             res["individual_predictions"] = prototype_engine.get_individual_predictions_for_window(res)
 
@@ -413,8 +423,14 @@ def get_simulation_state():
 
 @app.post("/api/simulation/start")
 def start_simulation():
-    """POST /api/simulation/start - Starts/resets multi-patient simulation."""
+    """POST /api/simulation/start - Starts/resumes multi-patient simulation."""
     return simulation_engine.start()
+
+
+@app.post("/api/simulation/reset")
+def reset_simulation():
+    """POST /api/simulation/reset - Resets multi-patient simulation to step 0."""
+    return simulation_engine.reset()
 
 
 @app.post("/api/simulation/step")
