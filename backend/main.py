@@ -275,15 +275,20 @@ def get_icu_patients_overview(window_index: int = Query(0, ge=0, le=3)):
             "status": "success",
             "window_index": simulation_engine.current_step,
             "patient_count": state["patient_count"],
-            "patients": state["patients"]
+            "patients": state["patients"],
+            "registered_patients": state.get("registered_patients", []),
+            "registered_patient_count": state.get("registered_patient_count", 0)
         }
 
     patients = db_repository.get_patients_overview(window_index=window_index)
+    registered = db_repository.get_registered_patients() if hasattr(db_repository, "get_registered_patients") else []
     return {
         "status": "success",
         "window_index": window_index,
         "patient_count": len(patients),
-        "patients": patients
+        "patients": patients,
+        "registered_patients": registered,
+        "registered_patient_count": len(registered)
     }
 
 
@@ -425,6 +430,12 @@ def get_simulation_state():
 def start_simulation():
     """POST /api/simulation/start - Starts/resumes multi-patient simulation."""
     return simulation_engine.start()
+
+
+@app.post("/api/simulation/pause")
+def pause_simulation():
+    """POST /api/simulation/pause - Pauses multi-patient simulation playback."""
+    return simulation_engine.pause()
 
 
 @app.post("/api/simulation/reset")

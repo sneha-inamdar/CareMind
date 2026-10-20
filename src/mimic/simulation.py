@@ -101,6 +101,11 @@ class CareMindSimulationEngine:
         self.is_running = True
         return self.get_simulation_state()
 
+    def pause(self):
+        """Pause simulation execution without resetting step."""
+        self.is_running = False
+        return self.get_simulation_state()
+
     def step(self) -> Dict[str, Any]:
         """
         Advance simulation across all patients by 1 step.
