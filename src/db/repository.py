@@ -43,8 +43,48 @@ class CareMindBaseRepository(ABC):
         pass
 
     @abstractmethod
-    def get_replay_timeline(self, record_id: str) -> List[Dict[str, Any]]:
-        """Return complete timeline windows for a record."""
+    def get_unmonitored_records(self) -> List[Dict[str, Any]]:
+        """Return genuine records from inventory not currently in monitored cohort."""
+        pass
+
+    @abstractmethod
+    def get_monitored_record_ids(self) -> List[str]:
+        """Return list of record IDs currently monitored."""
+        pass
+
+    @abstractmethod
+    def get_inventory_records(self) -> List[Dict[str, Any]]:
+        """Return all genuine records from cohort inventory."""
+        pass
+
+    @abstractmethod
+    def add_patient_to_cohort(self, record_id: str) -> Dict[str, Any]:
+        """Add a genuine record to the active monitored cohort."""
+        pass
+
+    @abstractmethod
+    def remove_patient_from_cohort(self, record_id: str) -> Dict[str, Any]:
+        """Remove a patient from the active monitored cohort while preserving raw data and inventory."""
+        pass
+
+    @abstractmethod
+    def get_registered_patients(self) -> List[Dict[str, Any]]:
+        """Return list of manually registered patients."""
+        pass
+
+    @abstractmethod
+    def register_patient(self, patient_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Register a patient profile manually without attaching physiological dataset records."""
+        pass
+
+    @abstractmethod
+    def remove_registered_patient(self, patient_id: str) -> bool:
+        """Remove a manually registered patient."""
+        pass
+
+    @abstractmethod
+    def is_record_monitored(self, record_id: str) -> bool:
+        """Check if record_id is currently monitored."""
         pass
 
 
@@ -53,6 +93,8 @@ class LocalJSONRepository(CareMindBaseRepository):
 
     def __init__(self, data_dir: str = DATA_DIR):
         self.data_dir = data_dir
+        self.monitored_cohort_path = os.path.join(self.data_dir, "monitored_cohort.json")
+        self.registered_patients_path = os.path.join(self.data_dir, "registered_patients.json")
         self.fallback_records_metadata = [
             {
                 "record_id": "81739927",
@@ -99,8 +141,8 @@ class LocalJSONRepository(CareMindBaseRepository):
                 return json.load(f)
         return {}
 
-    def get_available_records(self) -> List[Dict[str, Any]]:
-        # Try loading index file
+    def get_inventory_records(self) -> List[Dict[str, Any]]:
+        """Return all genuine records present in dataset index or local cache directory."""
         index_path = os.path.join(self.data_dir, "records_index.json")
         if os.path.exists(index_path):
             try:
@@ -111,9 +153,11 @@ class LocalJSONRepository(CareMindBaseRepository):
             except Exception:
                 pass
 
-        # Otherwise scan directory for *.json files excluding index
         if os.path.exists(self.data_dir):
-            files = [f for f in os.listdir(self.data_dir) if f.endswith(".json") and f != "records_index.json"]
+            files = [
+                f for f in os.listdir(self.data_dir)
+                if f.endswith(".json") and f not in ["records_index.json", "monitored_cohort.json"]
+            ]
             if files:
                 records = []
                 for fn in files:
@@ -121,9 +165,9 @@ class LocalJSONRepository(CareMindBaseRepository):
                         with open(os.path.join(self.data_dir, fn), "r") as f:
                             data = json.load(f)
                             records.append({
-                                "record_id": data.get("record_id", fn.replace(".json", "")),
-                                "subject_id": data.get("subject_id", 10000000),
-                                "stay_id": data.get("stay_id", 30000000),
+                                "record_id": str(data.get("record_id", fn.replace(".json", ""))),
+                                "subject_id": int(data.get("subject_id", 10000000)),
+                                "stay_id": int(data.get("stay_id", 30000000)),
                                 "bed_id": data.get("bed_id", "Bed ICU"),
                                 "duration_hrs": data.get("duration_hrs", 24.0),
                                 "fs": data.get("fs", 125.0),
@@ -139,6 +183,178 @@ class LocalJSONRepository(CareMindBaseRepository):
                     return records
 
         return self.fallback_records_metadata
+
+    def get_monitored_record_ids(self) -> List[str]:
+        """Return list of record IDs currently active in the monitored operational cohort."""
+        if os.path.exists(self.monitored_cohort_path):
+            try:
+                with open(self.monitored_cohort_path, "r") as f:
+                    data = json.load(f)
+                    if isinstance(data, list) and len(data) > 0:
+                        ids = [str(item["record_id"]) if isinstance(item, dict) else str(item) for item in data]
+                        return ids
+            except Exception as e:
+                print(f"[Repository] Warning reading monitored_cohort.json: {e}")
+
+        # Default initial operational cohort: 20 genuine records, leaving 4 available genuine records
+        inventory = self.get_inventory_records()
+        if len(inventory) > 20:
+            initial_ids = [str(r["record_id"]) for r in inventory[:20]]
+        else:
+            initial_ids = [str(r["record_id"]) for r in inventory]
+        self._save_monitored_record_ids(initial_ids)
+        return initial_ids
+
+    def _save_monitored_record_ids(self, ids: List[str]):
+        """Persist active monitored cohort record IDs to local JSON file."""
+        try:
+            with open(self.monitored_cohort_path, "w") as f:
+                json.dump(ids, f, indent=2)
+        except Exception as e:
+            print(f"[Repository] Error saving monitored_cohort.json: {e}")
+
+    def get_available_records(self) -> List[Dict[str, Any]]:
+        """Return metadata for all active monitored records in operational cohort."""
+        monitored_ids = set(self.get_monitored_record_ids())
+        inventory = self.get_inventory_records()
+        monitored_records = [r for r in inventory if str(r["record_id"]) in monitored_ids]
+        if not monitored_records:
+            return inventory
+        return monitored_records
+
+    def get_unmonitored_records(self) -> List[Dict[str, Any]]:
+        """Return genuine records from inventory that are not currently monitored."""
+        monitored_ids = set(self.get_monitored_record_ids())
+        inventory = self.get_inventory_records()
+        return [r for r in inventory if str(r["record_id"]) not in monitored_ids]
+
+    def is_record_monitored(self, record_id: str) -> bool:
+        """Check if record_id is already present in monitored cohort."""
+        return str(record_id).strip() in set(self.get_monitored_record_ids())
+
+    def add_patient_to_cohort(self, record_id: str) -> Dict[str, Any]:
+        """Add a genuine record to the active monitored cohort."""
+        rec_id = str(record_id).strip()
+        inventory = self.get_inventory_records()
+        found_meta = next((r for r in inventory if str(r["record_id"]) == rec_id), None)
+        if not found_meta:
+            raise ValueError(f"Record '{rec_id}' not found in genuine cohort inventory.")
+
+        current_ids = self.get_monitored_record_ids()
+        if rec_id in current_ids:
+            raise ValueError(f"Record '{rec_id}' is already present in the active monitored cohort.")
+
+        current_ids.append(rec_id)
+        self._save_monitored_record_ids(current_ids)
+        print(f"[Repository] Added record {rec_id} to active monitored cohort (Total: {len(current_ids)})")
+        return found_meta
+
+    def remove_patient_from_cohort(self, record_id: str) -> Dict[str, Any]:
+        """Remove a patient from the active monitored cohort while preserving raw data and inventory."""
+        rec_id = str(record_id).strip()
+        current_ids = self.get_monitored_record_ids()
+
+        if rec_id not in current_ids:
+            # Check if it was a registered patient
+            reg_removed = self.remove_registered_patient(rec_id)
+            if reg_removed:
+                return {
+                    "record_id": rec_id,
+                    "patient_id": rec_id,
+                    "status": "removed_registered"
+                }
+            raise ValueError(f"Record '{rec_id}' is not in the active monitored cohort.")
+
+        current_ids.remove(rec_id)
+        self._save_monitored_record_ids(current_ids)
+
+        inventory = self.get_inventory_records()
+        meta = next((r for r in inventory if str(r["record_id"]) == rec_id), {"record_id": rec_id})
+        print(f"[Repository] Removed record {rec_id} from active monitored cohort (Remaining: {len(current_ids)})")
+        return meta
+
+    def get_registered_patients(self) -> List[Dict[str, Any]]:
+        """Return list of manually registered patients without attached physiological data."""
+        if os.path.exists(self.registered_patients_path):
+            try:
+                with open(self.registered_patients_path, "r") as f:
+                    data = json.load(f)
+                    if isinstance(data, list):
+                        return data
+            except Exception as e:
+                print(f"[Repository] Warning reading registered_patients.json: {e}")
+        return []
+
+    def _save_registered_patients(self, patients: List[Dict[str, Any]]):
+        try:
+            with open(self.registered_patients_path, "w") as f:
+                json.dump(patients, f, indent=2)
+        except Exception as e:
+            print(f"[Repository] Error saving registered_patients.json: {e}")
+
+    def register_patient(self, patient_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Register a patient profile manually without attaching physiological dataset records."""
+        name = str(patient_data.get("name", "")).strip()
+        patient_id = str(patient_data.get("patient_id", "")).strip()
+
+        if not name:
+            raise ValueError("Patient name is required.")
+        if not patient_id:
+            raise ValueError("Patient ID is required.")
+
+        # Check uniqueness across registered patients
+        registered = self.get_registered_patients()
+        for p in registered:
+            if str(p.get("patient_id", "")).strip().lower() == patient_id.lower():
+                raise ValueError(f"Patient ID '{patient_id}' is already registered.")
+
+        # Also check uniqueness against actively monitored patients
+        monitored_records = self.get_available_records()
+        for m in monitored_records:
+            if str(m.get("subject_id", "")).strip().lower() == patient_id.lower() or str(m.get("record_id", "")).strip().lower() == patient_id.lower():
+                raise ValueError(f"Patient ID '{patient_id}' conflicts with an existing monitored patient identifier.")
+
+        age = patient_data.get("age")
+        if age is not None and str(age).strip():
+            try:
+                age = int(age)
+            except (ValueError, TypeError):
+                age = None
+        else:
+            age = None
+
+        new_patient = {
+            "patient_id": patient_id,
+            "subject_id": patient_id,
+            "name": name,
+            "age": age,
+            "sex": str(patient_data.get("sex", "")).strip() or "Unspecified",
+            "bed_id": str(patient_data.get("bed_id", "")).strip() or "Unassigned Bed",
+            "notes": str(patient_data.get("notes", "")).strip(),
+            "monitoring_status": "Registered — No Data Source Connected",
+            "is_monitored": False,
+            "record_id": None,
+            "stay_id": None,
+            "available_modalities": [],
+            "risk_score": None,
+            "priority_status": "UNMONITORED",
+            "vitals": None,
+            "created_at": "2026-10-12T19:00:00Z"
+        }
+
+        registered.append(new_patient)
+        self._save_registered_patients(registered)
+        print(f"[Repository] Registered patient {name} (ID: {patient_id}) without physiological data.")
+        return new_patient
+
+    def remove_registered_patient(self, patient_id: str) -> bool:
+        pid = str(patient_id).strip().lower()
+        registered = self.get_registered_patients()
+        filtered = [p for p in registered if str(p.get("patient_id", "")).strip().lower() != pid]
+        if len(filtered) < len(registered):
+            self._save_registered_patients(filtered)
+            return True
+        return False
 
     def get_patients_overview(self, window_index: int = 0) -> List[Dict[str, Any]]:
         patients = []
@@ -194,7 +410,7 @@ class LocalJSONRepository(CareMindBaseRepository):
 class SupabaseRepository(CareMindBaseRepository):
     """Supabase PostgreSQL repository implementation using Supabase Python Client SDK."""
 
-    def __init__(self, db_config: Optional[DatabaseConfig] = None, auto_sync: bool = True):
+    def __init__(self, db_config: Optional[DatabaseConfig] = None, auto_sync: bool = False):
         self.config = db_config or DatabaseConfig()
         if not SUPABASE_SDK_AVAILABLE:
             raise ImportError("supabase python SDK is not installed.")
@@ -215,18 +431,77 @@ class SupabaseRepository(CareMindBaseRepository):
         sync_engine = MIMICCohortSyncEngine(db_config=self.config, client=self.client)
         return sync_engine.sync_cohort_to_supabase(source_cohort)
 
-    def get_available_records(self) -> List[Dict[str, Any]]:
+    def get_inventory_records(self) -> List[Dict[str, Any]]:
+        """Return all genuine records from inventory."""
+        return self.local_fallback.get_inventory_records()
+
+    def get_monitored_record_ids(self) -> List[str]:
+        """Return list of record IDs currently monitored."""
+        return self.local_fallback.get_monitored_record_ids()
+
+    def get_unmonitored_records(self) -> List[Dict[str, Any]]:
+        """Return genuine records from inventory not currently in monitored cohort."""
+        return self.local_fallback.get_unmonitored_records()
+
+    def is_record_monitored(self, record_id: str) -> bool:
+        """Check if record_id is currently monitored."""
+        return self.local_fallback.is_record_monitored(record_id)
+
+    def add_patient_to_cohort(self, record_id: str) -> Dict[str, Any]:
+        """Add a genuine record to the active monitored cohort and synchronize with Supabase."""
+        meta = self.local_fallback.add_patient_to_cohort(record_id)
+        # Synchronize operational metadata with Supabase if client available (without shrinking)
         try:
-            res = self.client.table("waveform_records").select("*").execute()
-            if res.data and len(res.data) > 0:
-                print(f"[Repository] Using Supabase ({len(res.data)} operational records)")
-                return res.data
+            from src.db.cohort_sync import MIMICCohortSyncEngine
+            sync_engine = MIMICCohortSyncEngine(db_config=self.config, client=self.client)
+            sync_engine.sync_cohort_to_supabase([meta], deactivate_obsolete=False)
+            print(f"[Repository] Synchronized added record {record_id} to Supabase")
         except Exception as err:
             err_msg = str(err)
             if "42501" in err_msg or "permission denied" in err_msg.lower():
                 print(f"[Repository] Supabase permission error (42501) — using LocalJSON fallback ({err_msg})")
             else:
-                print(f"[Repository] Supabase notice: {err} — using LocalJSON fallback")
+                print(f"[Repository] Supabase synchronization notice: {err_msg} — preserved LocalJSON fallback")
+        return meta
+
+    def remove_patient_from_cohort(self, record_id: str) -> Dict[str, Any]:
+        """Remove a patient from the active monitored cohort and update Supabase."""
+        meta = self.local_fallback.remove_patient_from_cohort(record_id)
+        try:
+            stay_id = meta.get("stay_id")
+            if stay_id:
+                self.client.table("icu_stays").update({"status": "INACTIVE"}).eq("stay_id", stay_id).execute()
+        except Exception as err:
+            print(f"[Repository] Supabase deactivation notice: {err} — preserved LocalJSON fallback")
+        return meta
+
+    def get_registered_patients(self) -> List[Dict[str, Any]]:
+        return self.local_fallback.get_registered_patients()
+
+    def register_patient(self, patient_data: Dict[str, Any]) -> Dict[str, Any]:
+        patient = self.local_fallback.register_patient(patient_data)
+        try:
+            pid = patient["patient_id"]
+            if str(pid).isdigit():
+                subj_id = int(pid)
+                self.client.table("patients").upsert({
+                    "subject_id": subj_id,
+                    "gender": str(patient.get("sex", "M"))[0].upper() if patient.get("sex") else "M",
+                    "anchor_age": patient.get("age") or 65
+                }).execute()
+        except Exception as err:
+            err_msg = str(err)
+            if "42501" in err_msg or "permission denied" in err_msg.lower():
+                print(f"[Repository] Supabase permission notice (42501) — using LocalJSON fallback ({err_msg})")
+            else:
+                print(f"[Repository] Supabase registration notice: {err_msg} — preserved LocalJSON fallback")
+        return patient
+
+    def remove_registered_patient(self, patient_id: str) -> bool:
+        return self.local_fallback.remove_registered_patient(patient_id)
+
+    def get_available_records(self) -> List[Dict[str, Any]]:
+        # Align with active operational cohort
         return self.local_fallback.get_available_records()
 
     def get_patients_overview(self, window_index: int = 0) -> List[Dict[str, Any]]:
@@ -321,7 +596,7 @@ def get_repository() -> CareMindBaseRepository:
     config = DatabaseConfig()
     if config.is_supabase_configured and SUPABASE_SDK_AVAILABLE:
         try:
-            return SupabaseRepository(config)
+            return SupabaseRepository(config, auto_sync=False)
         except Exception as err:
             print(f"[Repository] Supabase initialization notice: {err} — using LocalJSON fallback")
     else:

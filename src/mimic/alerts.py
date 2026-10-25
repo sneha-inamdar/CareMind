@@ -178,3 +178,15 @@ class AlertEngine:
     def get_patient_active_alerts(self, record_id: str) -> List[Dict[str, Any]]:
         """Return active alerts for a specific patient record."""
         return [a for k, a in self.active_alerts.items() if a.get("record_id") == str(record_id)]
+
+    def remove_patient_alerts(self, record_id: str):
+        """Clear active alerts for a patient when removed from active monitoring."""
+        rec_str = str(record_id).strip()
+        keys_to_remove = [
+            k for k, a in self.active_alerts.items()
+            if str(a.get("record_id", "")).strip() == rec_str
+            or str(a.get("patient_id", "")).strip() == rec_str
+            or str(a.get("subject_id", "")).strip() == rec_str
+        ]
+        for k in keys_to_remove:
+            self.active_alerts.pop(k, None)

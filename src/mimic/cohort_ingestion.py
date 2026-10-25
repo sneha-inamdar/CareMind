@@ -59,10 +59,10 @@ class MIMICCohortIngestionEngine:
         """
         # Specific clinical profiles for known subjects or default profile
         known_vitals = {
-            10014354: {"HR": 88.0, "SpO2": 97.0, "Resp": 18.0, "SysBP": 124.0, "DiaBP": 78.0, "MAP": 93.3, "Temp": 37.1},
-            10020306: {"HR": 104.0, "SpO2": 94.0, "Resp": 22.0, "SysBP": 110.0, "DiaBP": 68.0, "MAP": 82.0, "Temp": 37.8},
+            10014354: {"HR": 63.0, "SpO2": 98.0, "Resp": 20.0, "SysBP": 153.0, "DiaBP": 60.0, "MAP": 85.0, "Temp": 36.6},
+            10020306: {"HR": 92.0, "SpO2": 96.0, "Resp": 14.0, "SysBP": 122.0, "DiaBP": 77.0, "MAP": 91.0, "Temp": 36.6},
             10019003: {"HR": 92.0, "SpO2": 96.0, "Resp": 20.0, "SysBP": 118.0, "DiaBP": 74.0, "MAP": 88.7, "Temp": 36.9},
-            10039708: {"HR": 76.0, "SpO2": 98.0, "Resp": 16.0, "SysBP": 122.0, "DiaBP": 80.0, "MAP": 94.0, "Temp": 37.0},
+            10039708: {"HR": 76.0, "SpO2": 99.0, "Resp": 18.0, "SysBP": 81.0, "DiaBP": 43.0, "MAP": 51.0, "Temp": 36.6},
             10126957: {"HR": None, "SpO2": None, "Resp": None, "SysBP": None, "DiaBP": None, "MAP": None, "Temp": None}
         }
         
@@ -71,6 +71,39 @@ class MIMICCohortIngestionEngine:
             
         # Return generic standard clinical baseline profile for newly ingested MIMIC subjects
         return {"HR": 82.0, "SpO2": 97.0, "Resp": 17.0, "SysBP": 120.0, "DiaBP": 76.0, "MAP": 90.7, "Temp": 37.0}
+
+    def get_clinical_vitals_series_for_subject(self, subject_id: int) -> List[Dict[str, float]]:
+        """
+        Extract genuine sequential bedside vitals across observation windows for known subjects,
+        or return repeated baseline for unlinked subjects.
+        """
+        known_series = {
+            10014354: [
+                {"HR": 63.0, "SpO2": 98.0, "Resp": 20.0, "SysBP": 153.0, "DiaBP": 60.0, "MAP": 85.0, "Temp": 36.6},
+                {"HR": 55.0, "SpO2": 96.0, "Resp": 23.0, "SysBP": 153.0, "DiaBP": 60.0, "MAP": 85.0, "Temp": 36.6},
+                {"HR": 53.0, "SpO2": 96.0, "Resp": 17.0, "SysBP": 153.0, "DiaBP": 60.0, "MAP": 85.0, "Temp": 36.6},
+                {"HR": 60.0, "SpO2": 96.0, "Resp": 14.0, "SysBP": 146.0, "DiaBP": 56.0, "MAP": 80.0, "Temp": 36.6}
+            ],
+            10020306: [
+                {"HR": 92.0, "SpO2": 96.0, "Resp": 14.0, "SysBP": 122.0, "DiaBP": 77.0, "MAP": 91.0, "Temp": 36.6},
+                {"HR": 98.0, "SpO2": 96.0, "Resp": 19.0, "SysBP": 85.0, "DiaBP": 73.0, "MAP": 78.0, "Temp": 36.6},
+                {"HR": 88.0, "SpO2": 96.0, "Resp": 23.0, "SysBP": 79.0, "DiaBP": 67.0, "MAP": 73.0, "Temp": 36.6},
+                {"HR": 105.0, "SpO2": 98.0, "Resp": 10.0, "SysBP": 87.0, "DiaBP": 64.0, "MAP": 73.0, "Temp": 36.1}
+            ],
+            10039708: [
+                {"HR": 76.0, "SpO2": 99.0, "Resp": 18.0, "SysBP": 81.0, "DiaBP": 43.0, "MAP": 51.0, "Temp": 36.6},
+                {"HR": 76.0, "SpO2": 99.0, "Resp": 18.0, "SysBP": 81.0, "DiaBP": 43.0, "MAP": 51.0, "Temp": 36.6},
+                {"HR": 81.0, "SpO2": 100.0, "Resp": 30.0, "SysBP": 81.0, "DiaBP": 43.0, "MAP": 51.0, "Temp": 36.4},
+                {"HR": 71.0, "SpO2": 100.0, "Resp": 19.0, "SysBP": 81.0, "DiaBP": 43.0, "MAP": 51.0, "Temp": 36.4}
+            ],
+            10126957: [
+                {"HR": None, "SpO2": None, "Resp": None, "SysBP": None, "DiaBP": None, "MAP": None, "Temp": None}
+            ] * 4
+        }
+        if subject_id in known_series:
+            return [v.copy() for v in known_series[subject_id]]
+        base = self.get_clinical_vitals_for_subject(subject_id)
+        return [base.copy() for _ in range(4)]
 
     def parse_header_info(self, pn_dir: str, rec_id: str) -> Dict[str, Any]:
         """Fetch and parse header file for record to determine channels, fs, duration, and tier."""
@@ -124,7 +157,14 @@ class MIMICCohortIngestionEngine:
         Extract waveform windows, compute features, execute model inference,
         and write JSON cache file.
         """
-        vitals = vitals_dict if vitals_dict is not None else self.get_clinical_vitals_for_subject(subject_id)
+        vitals_series: Optional[List[Dict[str, float]]] = None
+        if isinstance(vitals_dict, list):
+            vitals_series = vitals_dict
+        elif isinstance(vitals_dict, dict):
+            vitals_series = [vitals_dict]
+        else:
+            vitals_series = self.get_clinical_vitals_series_for_subject(subject_id)
+
         base_ts = pd.Timestamp(base_timestamp_str) if base_timestamp_str else pd.Timestamp("2150-01-01 08:00:00")
 
         windows = []
@@ -168,11 +208,12 @@ class MIMICCohortIngestionEngine:
             win_ts = base_ts + pd.Timedelta(minutes=win_idx * 15)
             timestamp_label = win_ts.strftime("%Y-%m-%d %H:%M:%S")
 
+            cur_vitals = vitals_series[min(win_idx, len(vitals_series) - 1)] if vitals_series else {}
             analysis = self.prototype_engine.analyze_multimodal_window(
                 record_id=record_id,
                 subject_id=subject_id,
                 window_index=win_idx,
-                vitals_dict=vitals,
+                vitals_dict=cur_vitals,
                 ecg_signal=ecg_sig,
                 ppg_signal=ppg_sig,
                 abp_signal=abp_sig,
@@ -196,7 +237,8 @@ class MIMICCohortIngestionEngine:
         if has_ecg: available_mods.append("ECG")
         if has_ppg: available_mods.append("PPG")
         if has_abp: available_mods.append("ABP")
-        if any(v is not None for v in vitals.values()): available_mods.append("Clinical Vitals")
+        has_clin_data = any(any(v is not None for v in win_v.values()) for win_v in vitals_series) if vitals_series else False
+        if has_clin_data: available_mods.append("Clinical Vitals")
 
         record_meta = {
             "record_id": record_id,

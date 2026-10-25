@@ -84,6 +84,11 @@ class CareMindMultimodalPrototype:
         self.clinical_encoder = ModalityEncoder("Clinical")
         self.waveform_encoder = ModalityEncoder("Waveform")
 
+        # Modality-specific signal encoders
+        self.ecg_encoder = ModalityEncoder("ECG")
+        self.ppg_encoder = ModalityEncoder("PPG")
+        self.abp_encoder = ModalityEncoder("ABP")
+
         self.fusion_scaler = StandardScaler()
         self.fusion_model = LogisticRegression(C=1.0, max_iter=200, random_state=42)
         self.is_fitted = False
@@ -148,6 +153,26 @@ class CareMindMultimodalPrototype:
 
         X_fusion_scaled = self.fusion_scaler.fit_transform(X_fusion)
         self.fusion_model.fit(X_fusion_scaled, y_fusion)
+
+        # Modality-specific baseline encoders for individual signal inference
+        # 1. ECG Sub-Encoder: [ECG_mean, ECG_std, ECG_rms, ECG_ptp, ECG_zero_crossings]
+        ecg_names = wave_names[0:5]
+        X_ecg = X_wave[:, 0:5]
+        y_ecg = (ecg_std > 1.2).astype(int)
+        self.ecg_encoder.fit(X_ecg, y_ecg, ecg_names)
+
+        # 2. PPG Sub-Encoder: [PPG_mean, PPG_std, PPG_peak_max, PPG_trough_min, PPG_amplitude_range]
+        ppg_names = wave_names[5:10]
+        X_ppg = X_wave[:, 5:10]
+        y_ppg = ((ppg_std < 0.5) | (ppg_amp < 1.0)).astype(int)
+        self.ppg_encoder.fit(X_ppg, y_ppg, ppg_names)
+
+        # 3. ABP Sub-Encoder: [ABP_mean, ABP_std, ABP_pulse_pressure]
+        abp_names = wave_names[10:13]
+        X_abp = X_wave[:, 10:13]
+        y_abp = ((abp_pp < 25) | (abp_std > 22)).astype(int)
+        self.abp_encoder.fit(X_abp, y_abp, abp_names)
+
         self.is_fitted = True
 
     def calculate_risk_category(self, score: float) -> str:
@@ -455,6 +480,14 @@ class CareMindMultimodalPrototype:
             idx = np.linspace(0, len(arr) - 1, max_len, dtype=int)
             return [round(float(arr[i]), 4) for i in idx]
 
+        # Compute genuine modality-specific individual model predictions
+        individual_preds = self.compute_individual_model_predictions(
+            clin_vitals=clin_vitals,
+            wave_feats=wave_feats,
+            available_modalities=available_modalities,
+            waveform_samples={"ecg": ecg_arr, "ppg": ppg_arr, "abp": abp_arr}
+        )
+
         return {
             "record_id": record_id,
             "subject_id": subject_id,
@@ -477,5 +510,448 @@ class CareMindMultimodalPrototype:
                 "ppg": sample_signal_for_ui(ppg_arr),
                 "abp": sample_signal_for_ui(abp_arr)
             },
+            "individual_predictions": individual_preds,
             "disclaimer": "CareMind Physiological Risk Score (0-100) is an engineering prototype decision-support metric for physiological instability, not a diagnostic or mortality prediction model."
         }
+
+    def compute_individual_model_predictions(
+        self,
+        clin_vitals: Dict[str, Any],
+        wave_feats: Dict[str, Any],
+        available_modalities: Optional[List[str]] = None,
+        waveform_samples: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Dict[str, Any]]:
+        """
+        Compute genuine, modality-specific inference predictions for:
+          - ECG
+          - PPG
+          - ABP
+          - Clinical Vitals
+
+        Distinguishes:
+          - prediction_available: usable input data present and model inference succeeded
+          - data_unavailable: patient/record has no usable signal/vitals for this modality
+          - model_unavailable: no compatible model is configured
+          - inference_failed: model execution raised an error
+
+        Returns dictionary keyed by modality ('ecg', 'ppg', 'abp', 'clinical').
+        """
+        available_mods = [str(m).upper() for m in (available_modalities or [])]
+        samples = waveform_samples or {}
+        predictions: Dict[str, Dict[str, Any]] = {}
+
+        # -------------------------------------------------------------
+        # 1. ECG Lead II
+        # -------------------------------------------------------------
+        try:
+            has_ecg_sample = bool(samples.get("ecg") is not None and len(samples["ecg"]) > 0)
+            has_ecg_meta = any("ECG" in m for m in available_mods)
+            has_ecg_feature = (wave_feats.get("ECG_is_missing", 1.0) == 0.0)
+            has_ecg_data = has_ecg_feature or has_ecg_sample or has_ecg_meta
+
+            if not has_ecg_data:
+                predictions["ecg"] = {
+                    "modality": "ECG",
+                    "modality_name": "ECG Lead II",
+                    "model_name": "ECG Waveform Instability Model",
+                    "model_version": "1.0.0",
+                    "status": "data_unavailable",
+                    "is_available": False,
+                    "prediction": None,
+                    "score": None,
+                    "class_probabilities": None,
+                    "risk_contribution": "0.0% (signal unmonitored)",
+                    "fusion_weight": 0.0,
+                    "features_used": None,
+                    "explanation": "ECG Lead II signal is not connected or waveform data is unavailable for this observation window.",
+                    "clinical_disclaimer": "Physiological instability indicator, not a definitive diagnostic arrhythmia classification."
+                }
+            elif not getattr(self, "ecg_encoder", None) or not self.ecg_encoder.is_fitted:
+                predictions["ecg"] = {
+                    "modality": "ECG",
+                    "modality_name": "ECG Lead II",
+                    "model_name": "ECG Waveform Instability Model",
+                    "model_version": "1.0.0",
+                    "status": "model_unavailable",
+                    "is_available": False,
+                    "prediction": None,
+                    "score": None,
+                    "class_probabilities": None,
+                    "risk_contribution": None,
+                    "fusion_weight": 0.0,
+                    "features_used": None,
+                    "explanation": "No compatible ECG physiological model is configured.",
+                    "clinical_disclaimer": "Physiological instability indicator."
+                }
+            else:
+                ecg_feat_names = ["ECG_mean", "ECG_std", "ECG_rms", "ECG_ptp", "ECG_zero_crossings"]
+                ecg_vec = np.array([[float(wave_feats.get(k, 0.0)) for k in ecg_feat_names]])
+                ecg_scores, _ = self.ecg_encoder.predict_risk_score(ecg_vec)
+                ecg_score = round(float(ecg_scores[0]), 1)
+                
+                ecg_scaled = self.ecg_encoder.scaler.transform(ecg_vec)
+                ecg_logits = float(self.ecg_encoder.model.decision_function(ecg_scaled)[0])
+                p_instability = round(float(1.0 / (1.0 + np.exp(-ecg_logits / 1.75))), 4)
+                p_normal = round(float(1.0 - p_instability), 4)
+
+                ecg_pred_label = "Elevated Rhythm Variability" if ecg_score >= 50.0 else "Normal Sinus Dynamics"
+
+                predictions["ecg"] = {
+                    "modality": "ECG",
+                    "modality_name": "ECG Lead II",
+                    "model_name": "ECG Waveform Instability Model",
+                    "model_version": "1.0.0",
+                    "status": "prediction_available",
+                    "is_available": True,
+                    "prediction": ecg_pred_label,
+                    "score": ecg_score,
+                    "class_probabilities": {
+                        "normal": p_normal,
+                        "elevated_variability": p_instability
+                    },
+                    "risk_contribution": "Waveform stream component (fused at 50.0% late fusion weight)",
+                    "fusion_weight": 0.5,
+                    "features_used": {k: round(float(wave_feats.get(k, 0.0)), 3) for k in ecg_feat_names},
+                    "explanation": "Evaluates continuous cardiac electrical rhythm stability, waveform amplitude standard deviation, and zero-crossing dispersion from continuous ECG Lead II.",
+                    "clinical_disclaimer": "Physiological instability indicator, not a definitive diagnostic arrhythmia classification."
+                }
+        except Exception as e:
+            predictions["ecg"] = {
+                "modality": "ECG",
+                "modality_name": "ECG Lead II",
+                "model_name": "ECG Waveform Instability Model",
+                "model_version": "1.0.0",
+                "status": "inference_failed",
+                "is_available": False,
+                "error": str(e),
+                "prediction": None,
+                "score": None,
+                "class_probabilities": None,
+                "risk_contribution": None,
+                "fusion_weight": 0.0,
+                "features_used": None,
+                "explanation": f"ECG model inference failed: {e}",
+                "clinical_disclaimer": "Inference error occurred."
+            }
+
+        # -------------------------------------------------------------
+        # 2. PPG / Plethysmogram
+        # -------------------------------------------------------------
+        try:
+            has_ppg_sample = bool(samples.get("ppg") is not None and len(samples["ppg"]) > 0)
+            has_ppg_meta = any("PPG" in m or "PLETH" in m for m in available_mods)
+            has_ppg_feature = (wave_feats.get("PPG_is_missing", 1.0) == 0.0)
+            has_ppg_data = has_ppg_feature or has_ppg_sample or has_ppg_meta
+
+            if not has_ppg_data:
+                predictions["ppg"] = {
+                    "modality": "PPG",
+                    "modality_name": "PLETH / PPG Pulse Wave",
+                    "model_name": "PPG Peripheral Perfusion Model",
+                    "model_version": "1.0.0",
+                    "status": "data_unavailable",
+                    "is_available": False,
+                    "prediction": None,
+                    "score": None,
+                    "class_probabilities": None,
+                    "risk_contribution": "0.0% (signal unmonitored)",
+                    "fusion_weight": 0.0,
+                    "features_used": None,
+                    "explanation": "PPG / Plethysmograph pulse waveform is not connected or unavailable for this observation window.",
+                    "clinical_disclaimer": "Physiological perfusion indicator, not a diagnostic peripheral vascular disease evaluation."
+                }
+            elif not getattr(self, "ppg_encoder", None) or not self.ppg_encoder.is_fitted:
+                predictions["ppg"] = {
+                    "modality": "PPG",
+                    "modality_name": "PLETH / PPG Pulse Wave",
+                    "model_name": "PPG Peripheral Perfusion Model",
+                    "model_version": "1.0.0",
+                    "status": "model_unavailable",
+                    "is_available": False,
+                    "prediction": None,
+                    "score": None,
+                    "class_probabilities": None,
+                    "risk_contribution": None,
+                    "fusion_weight": 0.0,
+                    "features_used": None,
+                    "explanation": "No compatible PPG physiological model is configured.",
+                    "clinical_disclaimer": "Physiological perfusion indicator."
+                }
+            else:
+                ppg_feat_names = ["PPG_mean", "PPG_std", "PPG_peak_max", "PPG_trough_min", "PPG_amplitude_range"]
+                ppg_vec = np.array([[float(wave_feats.get(k, 0.0)) for k in ppg_feat_names]])
+                ppg_scores, _ = self.ppg_encoder.predict_risk_score(ppg_vec)
+                ppg_score = round(float(ppg_scores[0]), 1)
+
+                ppg_scaled = self.ppg_encoder.scaler.transform(ppg_vec)
+                ppg_logits = float(self.ppg_encoder.model.decision_function(ppg_scaled)[0])
+                p_instability = round(float(1.0 / (1.0 + np.exp(-ppg_logits / 1.75))), 4)
+                p_normal = round(float(1.0 - p_instability), 4)
+
+                ppg_pred_label = "Attenuated Pulse / Perfusion Instability" if ppg_score >= 50.0 else "Normal Pulsatile Dynamics"
+
+                predictions["ppg"] = {
+                    "modality": "PPG",
+                    "modality_name": "PLETH / PPG Pulse Wave",
+                    "model_name": "PPG Peripheral Perfusion Model",
+                    "model_version": "1.0.0",
+                    "status": "prediction_available",
+                    "is_available": True,
+                    "prediction": ppg_pred_label,
+                    "score": ppg_score,
+                    "class_probabilities": {
+                        "normal": p_normal,
+                        "perfusion_attenuation": p_instability
+                    },
+                    "risk_contribution": "Waveform stream component (fused at 50.0% late fusion weight)",
+                    "fusion_weight": 0.5,
+                    "features_used": {k: round(float(wave_feats.get(k, 0.0)), 3) for k in ppg_feat_names},
+                    "explanation": "Evaluates peripheral vascular pulsatility, pulse wave attenuation, and amplitude stability from continuous photoplethysmogram.",
+                    "clinical_disclaimer": "Physiological perfusion indicator, not a diagnostic peripheral vascular disease evaluation."
+                }
+        except Exception as e:
+            predictions["ppg"] = {
+                "modality": "PPG",
+                "modality_name": "PLETH / PPG Pulse Wave",
+                "model_name": "PPG Peripheral Perfusion Model",
+                "model_version": "1.0.0",
+                "status": "inference_failed",
+                "is_available": False,
+                "error": str(e),
+                "prediction": None,
+                "score": None,
+                "class_probabilities": None,
+                "risk_contribution": None,
+                "fusion_weight": 0.0,
+                "features_used": None,
+                "explanation": f"PPG model inference failed: {e}",
+                "clinical_disclaimer": "Inference error occurred."
+            }
+
+        # -------------------------------------------------------------
+        # 3. Arterial Blood Pressure (ABP)
+        # -------------------------------------------------------------
+        try:
+            has_abp_sample = bool(samples.get("abp") is not None and len(samples["abp"]) > 0)
+            has_abp_meta = any("ABP" in m or "ART" in m for m in available_mods)
+            has_abp_feature = (wave_feats.get("ABP_is_missing", 1.0) == 0.0)
+            has_abp_data = has_abp_feature or has_abp_sample or has_abp_meta
+
+            if not has_abp_data:
+                predictions["abp"] = {
+                    "modality": "ABP",
+                    "modality_name": "Arterial Line ABP",
+                    "model_name": "ABP Hemodynamic Instability Model",
+                    "model_version": "1.0.0",
+                    "status": "data_unavailable",
+                    "is_available": False,
+                    "prediction": None,
+                    "score": None,
+                    "class_probabilities": None,
+                    "risk_contribution": "0.0% (signal unmonitored)",
+                    "fusion_weight": 0.0,
+                    "features_used": None,
+                    "explanation": "Invasive Arterial Line (ABP) is not connected or unmonitored for this patient.",
+                    "clinical_disclaimer": "Hemodynamic instability indicator, not a definitive shock diagnosis."
+                }
+            elif not getattr(self, "abp_encoder", None) or not self.abp_encoder.is_fitted:
+                predictions["abp"] = {
+                    "modality": "ABP",
+                    "modality_name": "Arterial Line ABP",
+                    "model_name": "ABP Hemodynamic Instability Model",
+                    "model_version": "1.0.0",
+                    "status": "model_unavailable",
+                    "is_available": False,
+                    "prediction": None,
+                    "score": None,
+                    "class_probabilities": None,
+                    "risk_contribution": None,
+                    "fusion_weight": 0.0,
+                    "features_used": None,
+                    "explanation": "No compatible ABP physiological model is configured.",
+                    "clinical_disclaimer": "Hemodynamic instability indicator."
+                }
+            else:
+                abp_feat_names = ["ABP_mean", "ABP_std", "ABP_pulse_pressure"]
+                abp_vec = np.array([[float(wave_feats.get(k, 0.0)) for k in abp_feat_names]])
+                abp_scores, _ = self.abp_encoder.predict_risk_score(abp_vec)
+                abp_score = round(float(abp_scores[0]), 1)
+
+                abp_scaled = self.abp_encoder.scaler.transform(abp_vec)
+                abp_logits = float(self.abp_encoder.model.decision_function(abp_scaled)[0])
+                p_instability = round(float(1.0 / (1.0 + np.exp(-abp_logits / 1.75))), 4)
+                p_normal = round(float(1.0 - p_instability), 4)
+
+                abp_pred_label = "Hemodynamic Instability / Pulse Pressure Narrowing" if abp_score >= 50.0 else "Hemodynamically Stable"
+
+                predictions["abp"] = {
+                    "modality": "ABP",
+                    "modality_name": "Arterial Line ABP",
+                    "model_name": "ABP Hemodynamic Instability Model",
+                    "model_version": "1.0.0",
+                    "status": "prediction_available",
+                    "is_available": True,
+                    "prediction": abp_pred_label,
+                    "score": abp_score,
+                    "class_probabilities": {
+                        "normal": p_normal,
+                        "hemodynamic_instability": p_instability
+                    },
+                    "risk_contribution": "Waveform stream component (fused at 50.0% late fusion weight)",
+                    "fusion_weight": 0.5,
+                    "features_used": {k: round(float(wave_feats.get(k, 0.0)), 2) for k in abp_feat_names},
+                    "explanation": "Evaluates continuous invasive arterial pressure variability, pulse pressure degradation, and acute hemodynamic derangements.",
+                    "clinical_disclaimer": "Hemodynamic instability indicator, not a definitive shock diagnosis."
+                }
+        except Exception as e:
+            predictions["abp"] = {
+                "modality": "ABP",
+                "modality_name": "Arterial Line ABP",
+                "model_name": "ABP Hemodynamic Instability Model",
+                "model_version": "1.0.0",
+                "status": "inference_failed",
+                "is_available": False,
+                "error": str(e),
+                "prediction": None,
+                "score": None,
+                "class_probabilities": None,
+                "risk_contribution": None,
+                "fusion_weight": 0.0,
+                "features_used": None,
+                "explanation": f"ABP model inference failed: {e}",
+                "clinical_disclaimer": "Inference error occurred."
+            }
+
+        # -------------------------------------------------------------
+        # 4. Clinical Bedside Vitals
+        # -------------------------------------------------------------
+        try:
+            has_clinical_data = any(
+                v is not None and (not isinstance(v, (int, float)) or (not np.isnan(v) and v > 0))
+                for v in clin_vitals.values()
+            )
+
+            if not has_clinical_data:
+                predictions["clinical"] = {
+                    "modality": "Clinical Vitals",
+                    "modality_name": "Observed Bedside Vitals",
+                    "model_name": "Bedside Clinical Instability Model",
+                    "model_version": "1.0.0",
+                    "status": "data_unavailable",
+                    "is_available": False,
+                    "prediction": None,
+                    "score": None,
+                    "class_probabilities": None,
+                    "risk_contribution": "0.0% (vitals unobserved; fallback to waveform stream)",
+                    "fusion_weight": 0.0,
+                    "features_used": None,
+                    "explanation": "No bedside vital signs (HR, SpO2, BP, MAP, Resp, Temp) observed for this observation window.",
+                    "clinical_disclaimer": "Physiological instability indicator, not a medical diagnostic model."
+                }
+            elif not getattr(self, "clinical_encoder", None) or not self.clinical_encoder.is_fitted:
+                predictions["clinical"] = {
+                    "modality": "Clinical Vitals",
+                    "modality_name": "Observed Bedside Vitals",
+                    "model_name": "Bedside Clinical Instability Model",
+                    "model_version": "1.0.0",
+                    "status": "model_unavailable",
+                    "is_available": False,
+                    "prediction": None,
+                    "score": None,
+                    "class_probabilities": None,
+                    "risk_contribution": None,
+                    "fusion_weight": 0.0,
+                    "features_used": None,
+                    "explanation": "No compatible Clinical Vitals physiological model is configured.",
+                    "clinical_disclaimer": "Physiological instability indicator."
+                }
+            else:
+                X_clin, _ = self.extract_clinical_feature_vector(clin_vitals)
+                clin_score_arr, _ = self.clinical_encoder.predict_risk_score(X_clin)
+                clin_score = round(float(clin_score_arr[0]), 1)
+
+                clin_scaled = self.clinical_encoder.scaler.transform(X_clin)
+                clin_logits = float(self.clinical_encoder.model.decision_function(clin_scaled)[0])
+                p_instability = round(float(1.0 / (1.0 + np.exp(-clin_logits / 1.75))), 4)
+                p_normal = round(float(1.0 - p_instability), 4)
+
+                if clin_score >= 75.0:
+                    clin_pred_label = "Critical Vital Derangement"
+                elif clin_score >= 50.0:
+                    clin_pred_label = "Moderate Vital Instability"
+                else:
+                    clin_pred_label = "Low Risk / Stable"
+
+                # Check if waveforms are present to specify exact fusion contribution
+                has_any_waveform = any(
+                    m in available_mods for m in ["ECG", "PPG", "ABP", "PLETH"]
+                ) or (predictions.get("ecg", {}).get("is_available") or predictions.get("ppg", {}).get("is_available") or predictions.get("abp", {}).get("is_available"))
+
+                fusion_weight = 0.5 if has_any_waveform else 1.0
+                fusion_desc = f"{fusion_weight * 100:.0f}% linear contribution to composite multimodal risk"
+                if has_any_waveform:
+                    fusion_desc += " (balanced with waveform stream)"
+                else:
+                    fusion_desc += " (waveform stream absent; 100% vital-dominant)"
+
+                clin_feats_used = {k: clin_vitals.get(k) for k in ["HR", "SpO2", "Resp", "SysBP", "DiaBP", "MAP", "Temp"]}
+
+                predictions["clinical"] = {
+                    "modality": "Clinical Vitals",
+                    "modality_name": "Observed Bedside Vitals",
+                    "model_name": "Bedside Clinical Instability Model",
+                    "model_version": "1.0.0",
+                    "status": "prediction_available",
+                    "is_available": True,
+                    "prediction": clin_pred_label,
+                    "score": clin_score,
+                    "class_probabilities": {
+                        "normal": p_normal,
+                        "vital_instability": p_instability
+                    },
+                    "risk_contribution": fusion_desc,
+                    "fusion_weight": fusion_weight,
+                    "features_used": clin_feats_used,
+                    "explanation": "Temperature-calibrated logistic regression evaluating acute multi-parameter bedside vital deviations against physiological thresholds.",
+                    "clinical_disclaimer": "Physiological instability indicator, not a medical diagnostic model."
+                }
+        except Exception as e:
+            predictions["clinical"] = {
+                "modality": "Clinical Vitals",
+                "modality_name": "Observed Bedside Vitals",
+                "model_name": "Bedside Clinical Instability Model",
+                "model_version": "1.0.0",
+                "status": "inference_failed",
+                "is_available": False,
+                "error": str(e),
+                "prediction": None,
+                "score": None,
+                "class_probabilities": None,
+                "risk_contribution": None,
+                "fusion_weight": 0.0,
+                "features_used": None,
+                "explanation": f"Clinical vitals model inference failed: {e}",
+                "clinical_disclaimer": "Inference error occurred."
+            }
+
+        return predictions
+
+    def get_individual_predictions_for_window(self, window_data: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+        """
+        Helper to retrieve pre-computed individual predictions or evaluate them dynamically
+        from window features if missing from cache.
+        """
+        if "individual_predictions" in window_data and isinstance(window_data["individual_predictions"], dict):
+            return window_data["individual_predictions"]
+
+        clin_vitals = window_data.get("clinical_features", {})
+        wave_feats = window_data.get("waveform_features", {})
+        samples = window_data.get("waveform_samples", {})
+        available_mods = window_data.get("available_modalities", [])
+
+        return self.compute_individual_model_predictions(
+            clin_vitals=clin_vitals,
+            wave_feats=wave_feats,
+            available_modalities=available_mods,
+            waveform_samples=samples
+        )

@@ -77,9 +77,10 @@ class CareMindSimulationEngine:
                 "priority_status": w0_prio,
                 "clinical_features": w0.get("clinical_features", {}),
                 "waveform_features": w0.get("waveform_features", {}),
-                "available_modalities": w0.get("available_modalities", []),
+                "available_modalities": meta.get("available_modalities") or w0.get("available_modalities", []),
                 "contributing_factors": w0.get("contributing_factors", []),
                 "cached_windows": cached_windows,
+                "individual_predictions": self.prototype.get_individual_predictions_for_window(w0),
                 "active_alerts": [],
                 "disclaimer": w0.get("disclaimer", "CareMind Physiological Risk Score is an engineering prototype decision-support metric.")
             }
@@ -98,6 +99,11 @@ class CareMindSimulationEngine:
     def start(self):
         """Start or resume simulation execution."""
         self.is_running = True
+        return self.get_simulation_state()
+
+    def pause(self):
+        """Pause simulation execution without resetting step."""
+        self.is_running = False
         return self.get_simulation_state()
 
     def step(self) -> Dict[str, Any]:
@@ -130,7 +136,7 @@ class CareMindSimulationEngine:
             p_state["risk_category"] = target_window.get("risk_category", "LOW")
             p_state["clinical_features"] = target_window.get("clinical_features", {})
             p_state["waveform_features"] = target_window.get("waveform_features", {})
-            p_state["available_modalities"] = target_window.get("available_modalities", [])
+            p_state["available_modalities"] = p_state.get("available_modalities") or target_window.get("available_modalities", [])
 
             # Temporal trend calculation
             delta = round(curr_risk - prev_risk, 1)
@@ -159,6 +165,9 @@ class CareMindSimulationEngine:
                 risk_trend_delta=delta
             )
 
+            # Update individual model predictions for target window
+            p_state["individual_predictions"] = self.prototype.get_individual_predictions_for_window(target_window)
+
             # Evaluate alerts via AlertEngine
             alerts = self.alert_engine.evaluate_patient_alerts(p_state)
             p_state["active_alerts"] = alerts
@@ -183,8 +192,11 @@ class CareMindSimulationEngine:
                 "risk_trend_delta": p["risk_trend_delta"],
                 "risk_trend_status": p["risk_trend_status"],
                 "priority_status": p["priority_status"],
+                "monitoring_status": "Dataset Replay Active",
+                "is_monitored": True,
                 "vitals": p["clinical_features"],
                 "available_modalities": p["available_modalities"],
+                "individual_predictions": p.get("individual_predictions", {}),
                 "primary_alert": p["contributing_factors"][0]["factor"] if p["contributing_factors"] else "Normal Parameters",
                 "contributing_factors": p["contributing_factors"],
                 "active_alerts_count": len(p["active_alerts"]),
@@ -194,6 +206,8 @@ class CareMindSimulationEngine:
         # Rank patients descending by CareMind risk score
         patient_list.sort(key=lambda x: x["risk_score"], reverse=True)
 
+        registered = self.repository.get_registered_patients() if hasattr(self.repository, "get_registered_patients") else []
+
         return {
             "status": "success",
             "is_running": self.is_running,
@@ -201,6 +215,8 @@ class CareMindSimulationEngine:
             "total_steps": self.total_steps,
             "patient_count": len(patient_list),
             "patients": patient_list,
+            "registered_patients": registered,
+            "registered_patient_count": len(registered),
             "active_alerts": self.alert_engine.get_all_active_alerts()
         }
 
@@ -222,3 +238,83 @@ class CareMindSimulationEngine:
             "active_alerts": p_state["active_alerts"],
             "timeline": p_state["cached_windows"]
         }
+
+    def add_patient_record(self, meta: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Dynamically enroll a newly added genuine patient record into active simulation
+        without resetting, restarting, or interrupting the simulation timeline.
+        """
+        rec_id = str(meta["record_id"])
+        if rec_id in self.patient_states:
+            return self.patient_states[rec_id]
+
+        cache_path = os.path.join(self.data_dir, f"{rec_id}.json")
+        cached_windows = []
+        if os.path.exists(cache_path):
+            try:
+                with open(cache_path, "r") as f:
+                    cached_data = json.load(f)
+                    cached_windows = cached_data.get("windows", [])
+            except Exception as e:
+                print(f"[SimulationEngine] Warning reading {cache_path}: {e}")
+
+        w_idx = min(self.current_step, len(cached_windows) - 1) if cached_windows else 0
+        w_curr = cached_windows[w_idx] if cached_windows else {}
+        w_risk = float(w_curr.get("risk_score", 0.0))
+        w_prio = w_curr.get("priority_status")
+        if not w_prio:
+            if w_risk >= 75.0:
+                w_prio = "CRITICAL_PRIORITY"
+            elif w_risk >= 50.0:
+                w_prio = "HIGH_PRIORITY"
+            else:
+                w_prio = "ROUTINE_MONITORING"
+
+        subj_id = meta.get("subject_id")
+        patient_state = {
+            "record_id": rec_id,
+            "subject_id": subj_id,
+            "stay_id": meta.get("stay_id"),
+            "bed_id": meta.get("bed_id", f"Bed ICU-{(int(subj_id or 0) % 20) + 1:02d}"),
+            "window_index": w_idx,
+            "total_windows": len(cached_windows),
+            "timestamp": w_curr.get("timestamp", "2148-08-16 09:00:17"),
+            "risk_score": w_risk,
+            "risk_category": w_curr.get("risk_category", "LOW"),
+            "risk_trend_delta": 0.0,
+            "risk_trend_status": "STABLE",
+            "priority_status": w_prio,
+            "clinical_features": w_curr.get("clinical_features", {}),
+            "waveform_features": w_curr.get("waveform_features", {}),
+            "available_modalities": w_curr.get("available_modalities", meta.get("available_modalities", [])),
+            "contributing_factors": w_curr.get("contributing_factors", []),
+            "cached_windows": cached_windows,
+            "individual_predictions": self.prototype.get_individual_predictions_for_window(w_curr),
+            "active_alerts": [],
+            "disclaimer": w_curr.get("disclaimer", "CareMind Physiological Risk Score is an engineering prototype decision-support metric.")
+        }
+
+        alerts = self.alert_engine.evaluate_patient_alerts(patient_state)
+        patient_state["active_alerts"] = alerts
+        self.patient_states[rec_id] = patient_state
+        return patient_state
+
+    def remove_patient_record(self, record_id: str) -> bool:
+        """
+        Dynamically remove a patient from the running simulation state,
+        clear their active alerts, and update the roster without restarting the simulation.
+        """
+        rec_str = str(record_id).strip()
+        removed = False
+        target_keys = []
+        for r_id, p in list(self.patient_states.items()):
+            if str(r_id).strip() == rec_str or str(p.get("subject_id", "")).strip() == rec_str or str(p.get("record_id", "")).strip() == rec_str:
+                target_keys.append(r_id)
+
+        for k in target_keys:
+            del self.patient_states[k]
+            removed = True
+
+        self.alert_engine.remove_patient_alerts(rec_str)
+        return removed
+

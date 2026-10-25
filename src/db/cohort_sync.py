@@ -34,7 +34,7 @@ class MIMICCohortSyncEngine:
                 print(f"[CohortSync] Client initialization notice: {e}")
 
     def sync_cohort_to_supabase(
-        self, source_cohort: Optional[List[Dict[str, Any]]] = None
+        self, source_cohort: Optional[List[Dict[str, Any]]] = None, deactivate_obsolete: bool = True
     ) -> Dict[str, Any]:
         """
         Synchronizes the source cohort metadata with Supabase.
@@ -118,15 +118,16 @@ class MIMICCohortSyncEngine:
             # 3. Upsert Waveform Records
             self.client.table("waveform_records").upsert(list(records_dict.values()), on_conflict="record_id").execute()
 
-            # 4. Handle Cohort Shrinking / Deactivation
-            sb_records_res = self.client.table("waveform_records").select("record_id").execute()
-            if sb_records_res.data:
-                sb_rec_ids = {r["record_id"] for r in sb_records_res.data}
-                obsolete_ids = sb_rec_ids - active_record_ids
-                if obsolete_ids:
-                    print(f"[CohortSync] Removing obsolete records from Supabase cohort: {obsolete_ids}")
-                    for obs_id in obsolete_ids:
-                        self.client.table("waveform_records").delete().eq("record_id", obs_id).execute()
+            # 4. Handle Cohort Shrinking / Deactivation (only when full cohort sync with deactivate_obsolete enabled)
+            if deactivate_obsolete:
+                sb_records_res = self.client.table("waveform_records").select("record_id").execute()
+                if sb_records_res.data:
+                    sb_rec_ids = {r["record_id"] for r in sb_records_res.data}
+                    obsolete_ids = sb_rec_ids - active_record_ids
+                    if obsolete_ids:
+                        print(f"[CohortSync] Removing obsolete records from Supabase cohort: {obsolete_ids}")
+                        for obs_id in obsolete_ids:
+                            self.client.table("waveform_records").delete().eq("record_id", obs_id).execute()
 
             # 5. Synchronize observation windows, vitals & risk assessments for cached windows
             from src.db.repository import LocalJSONRepository
