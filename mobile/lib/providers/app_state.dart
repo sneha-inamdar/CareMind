@@ -16,6 +16,8 @@ class AppState extends ChangeNotifier {
       'ALL'; // 'ALL', 'CRITICAL', 'HIGH', 'ROUTINE', 'REGISTERED'
 
   bool _isLoading = false;
+  bool _isConnecting = false;
+  bool _isBackendReachable = false;
   String? _errorMessage;
 
   List<PatientOverview> _patients = [];
@@ -33,6 +35,8 @@ class AppState extends ChangeNotifier {
   int get currentTabIndex => _currentTabIndex;
   String get activeFilter => _activeFilter;
   bool get isLoading => _isLoading;
+  bool get isConnecting => _isConnecting;
+  bool get isBackendReachable => _isBackendReachable;
   String? get errorMessage => _errorMessage;
 
   List<PatientOverview> get patients => _patients;
@@ -79,8 +83,10 @@ class AppState extends ChangeNotifier {
   int get registeredCount => _registeredPatients.length;
   int get totalAllCount => allPatients.length;
 
-  AppState() {
-    loadData();
+  AppState({bool autoLoad = true}) {
+    if (autoLoad) {
+      loadData();
+    }
   }
 
   @override
@@ -115,42 +121,67 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setBaseUrl(String url) {
-    ApiConfig.setBaseUrl(url);
-    loadData();
+  Future<void> setBaseUrl(String url) async {
+    try {
+      await ApiConfig.setBaseUrl(url);
+    } catch (e) {
+      _errorMessage = 'Invalid URL: ${e.toString()}';
+      notifyListeners();
+      return;
+    }
+    await loadData();
   }
 
+  /// Loads CareMind ICU simulation and patient data with reliable connectivity diagnostics.
+  /// Prevents concurrent/duplicate health requests.
   Future<void> loadData() async {
+    if (_isConnecting) return;
+    _isConnecting = true;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
-    // Fetch simulation state & patients
-    final simResult = await ApiService.getSimulationState();
-    if (simResult.isSuccess && simResult.data != null) {
-      _applySimulationState(simResult.data!);
+    try {
+      // 1. Diagnostics: check health endpoint to verify reachability
+      final healthResult = await ApiService.checkHealth();
+      if (!healthResult.isSuccess) {
+        _isBackendReachable = false;
+        _errorMessage =
+            healthResult.errorMessage ??
+            'Unable to connect to CareMind backend at ${ApiConfig.baseUrl}';
+        return;
+      }
+
+      _isBackendReachable = true;
+
+      // 2. Fetch simulation state
+      final simResult = await ApiService.getSimulationState();
+      if (simResult.isSuccess && simResult.data != null) {
+        _applySimulationState(simResult.data!);
+        _errorMessage = null;
+        return;
+      }
+
+      // 3. Fallback: fetch patients and alerts directly
+      final patientsResult = await ApiService.getPatientsOverview();
+      final alertsResult = await ApiService.getActiveAlerts();
+
+      if (patientsResult.isSuccess) {
+        final list = patientsResult.data ?? [];
+        _patients = list.where((p) => p.isMonitored).toList();
+        _registeredPatients = list.where((p) => !p.isMonitored).toList();
+        _activeAlerts = alertsResult.data ?? [];
+        _errorMessage = null;
+      } else {
+        // Health check succeeded, but patient overview endpoint failed
+        _errorMessage =
+            'Connected to CareMind engine, but failed to load patient data: ${patientsResult.errorMessage ?? 'Unknown error'}';
+      }
+    } finally {
       _isLoading = false;
+      _isConnecting = false;
       notifyListeners();
-      return;
     }
-
-    // Fallback: fetch patients directly
-    final patientsResult = await ApiService.getPatientsOverview();
-    final alertsResult = await ApiService.getActiveAlerts();
-
-    if (patientsResult.isSuccess) {
-      final list = patientsResult.data ?? [];
-      _patients = list.where((p) => p.isMonitored).toList();
-      _registeredPatients = list.where((p) => !p.isMonitored).toList();
-      _activeAlerts = alertsResult.data ?? [];
-      _errorMessage = null;
-    } else {
-      _errorMessage =
-          patientsResult.errorMessage ?? 'Failed to load CareMind data';
-    }
-
-    _isLoading = false;
-    notifyListeners();
   }
 
   void _applySimulationState(SimulationState state) {
@@ -350,6 +381,8 @@ class AppState extends ChangeNotifier {
 
   @visibleForTesting
   void setErrorMessageForTesting(String? msg) {
+    _isLoading = false;
+    _isConnecting = false;
     _errorMessage = msg;
     notifyListeners();
   }

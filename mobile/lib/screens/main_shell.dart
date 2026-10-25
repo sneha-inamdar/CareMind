@@ -122,7 +122,7 @@ class MainShell extends StatelessWidget {
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                           ),
-                          maxLines: 2,
+                          maxLines: 4,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -163,11 +163,24 @@ class MainShell extends StatelessWidget {
                         ),
                       ),
                       ElevatedButton.icon(
-                        onPressed: appState.loadData,
-                        icon: const Icon(Icons.refresh_rounded, size: 14),
-                        label: const Text(
-                          'Retry Connection',
-                          style: TextStyle(
+                        onPressed: appState.isLoading
+                            ? null
+                            : appState.loadData,
+                        icon: appState.isLoading
+                            ? const SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(Icons.refresh_rounded, size: 14),
+                        label: Text(
+                          appState.isLoading
+                              ? 'Connecting...'
+                              : 'Retry Connection',
+                          style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                           ),

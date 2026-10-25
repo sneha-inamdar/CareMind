@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'config/api_config.dart';
 import 'providers/app_state.dart';
 import 'theme/app_theme.dart';
 import 'screens/main_shell.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await ApiConfig.init();
   runApp(const CareMindApp());
 }
 

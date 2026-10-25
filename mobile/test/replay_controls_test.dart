@@ -77,7 +77,6 @@ void main() {
     ) async {
       final appState = AppState();
 
-
       // Manually trigger completion via simulation state
       await tester.pumpWidget(
         MaterialApp(
