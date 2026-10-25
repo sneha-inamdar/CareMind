@@ -25,11 +25,13 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Enable CORS for frontend web and mobile client integration
+# Optional custom origins from environment variable, while preserving local development and Android LAN testing
+configured_origins = [o.strip() for o in os.getenv("CORS_ORIGINS", "").split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_origin_regex=r"http://(localhost|127\.0\.0\.1|10\.0\.2\.2|192\.168\.\d+\.\d+)(:\d+)?",
+    allow_origins=configured_origins,
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1|10\.0\.2\.2|192\.168\.\d+\.\d+)(:\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -1,0 +1,20 @@
+[
+  {
+    "patient_id": "PT - 1001218",
+    "subject_id": "PT - 1001218",
+    "name": "Rahul Patil",
+    "age": 25,
+    "sex": "Male",
+    "bed_id": "Bed ICU 21",
+    "notes": "",
+    "monitoring_status": "Registered \u2014 No Data Source Connected",
+    "is_monitored": false,
+    "record_id": null,
+    "stay_id": null,
+    "available_modalities": [],
+    "risk_score": null,
+    "priority_status": "UNMONITORED",
+    "vitals": null,
+    "created_at": "2026-10-12T19:00:00Z"
+  }
+]

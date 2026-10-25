@@ -1,0 +1,14 @@
+.git
+.gitignore
+.env*
+.pytest_cache
+**/__pycache__
+*.pyc
+tests/
+scratch/
+mobile/
+data/MIMIC_Demo/
+data/physionet2019/
+experiments/*.py
+experiments/phase5a_baseline/
+*.ipynb

@@ -1,0 +1,367 @@
+[
+  {
+    "record_id": "84992147",
+    "subject_id": 10000032,
+    "stay_id": 30000032,
+    "bed_id": "Bed ICU-01",
+    "duration_hrs": 24.0,
+    "fs": 125.0,
+    "available_modalities": [
+      "Clinical Vitals"
+    ],
+    "tier": "Tier 4 (Other)",
+    "windows_count": 4,
+    "description": "Patient #10000032 \u2014 Genuine MIMIC Clinical Record (Bed ICU-01)"
+  },
+  {
+    "record_id": "80628315",
+    "subject_id": 10001884,
+    "stay_id": 30001884,
+    "bed_id": "Bed ICU-02",
+    "duration_hrs": 24.0,
+    "fs": 125.0,
+    "available_modalities": [
+      "Clinical Vitals"
+    ],
+    "tier": "Tier 4 (Other)",
+    "windows_count": 4,
+    "description": "Patient #10001884 \u2014 Genuine MIMIC Clinical Record (Bed ICU-02)"
+  },
+  {
+    "record_id": "83820235",
+    "subject_id": 10002013,
+    "stay_id": 30002013,
+    "bed_id": "Bed ICU-03",
+    "duration_hrs": 24.0,
+    "fs": 125.0,
+    "available_modalities": [
+      "Clinical Vitals"
+    ],
+    "tier": "Tier 4 (Other)",
+    "windows_count": 4,
+    "description": "Patient #10002013 \u2014 Genuine MIMIC Clinical Record (Bed ICU-03)"
+  },
+  {
+    "record_id": "80338760",
+    "subject_id": 10003004,
+    "stay_id": 30003004,
+    "bed_id": "Bed ICU-04",
+    "duration_hrs": 24.0,
+    "fs": 125.0,
+    "available_modalities": [
+      "Clinical Vitals"
+    ],
+    "tier": "Tier 4 (Other)",
+    "windows_count": 4,
+    "description": "Patient #10003004 \u2014 Genuine MIMIC Clinical Record (Bed ICU-04)"
+  },
+  {
+    "record_id": "89669614",
+    "subject_id": 10003400,
+    "stay_id": 30003400,
+    "bed_id": "Bed ICU-05",
+    "duration_hrs": 24.0,
+    "fs": 125.0,
+    "available_modalities": [
+      "Clinical Vitals"
+    ],
+    "tier": "Tier 4 (Other)",
+    "windows_count": 4,
+    "description": "Patient #10003400 \u2014 Genuine MIMIC Clinical Record (Bed ICU-05)"
+  },
+  {
+    "record_id": "82136005",
+    "subject_id": 10004555,
+    "stay_id": 30004555,
+    "bed_id": "Bed ICU-06",
+    "duration_hrs": 24.0,
+    "fs": 125.0,
+    "available_modalities": [
+      "Clinical Vitals"
+    ],
+    "tier": "Tier 4 (Other)",
+    "windows_count": 4,
+    "description": "Patient #10004555 \u2014 Genuine MIMIC Clinical Record (Bed ICU-06)"
+  },
+  {
+    "record_id": "80407156",
+    "subject_id": 10005667,
+    "stay_id": 30005667,
+    "bed_id": "Bed ICU-07",
+    "duration_hrs": 24.0,
+    "fs": 125.0,
+    "available_modalities": [
+      "Clinical Vitals"
+    ],
+    "tier": "Tier 4 (Other)",
+    "windows_count": 4,
+    "description": "Patient #10005667 \u2014 Genuine MIMIC Clinical Record (Bed ICU-07)"
+  },
+  {
+    "record_id": "81739927",
+    "subject_id": 10014354,
+    "stay_id": 30014354,
+    "bed_id": "Bed ICU-08",
+    "duration_hrs": 24.0,
+    "fs": 125.0,
+    "available_modalities": [
+      "ECG",
+      "PPG",
+      "Clinical Vitals"
+    ],
+    "tier": "Tier 2 (ECG+PPG)",
+    "windows_count": 4,
+    "description": "Patient #10014354 \u2014 Genuine MIMIC Waveform Record (Tier 2 (ECG+PPG))"
+  },
+  {
+    "record_id": "80299691",
+    "subject_id": 10019003,
+    "stay_id": 30019003,
+    "bed_id": "Bed ICU-09",
+    "duration_hrs": 24.0,
+    "fs": 125.0,
+    "available_modalities": [
+      "Clinical Vitals"
+    ],
+    "tier": "Tier 4 (Other)",
+    "windows_count": 4,
+    "description": "Patient #10019003 \u2014 Genuine MIMIC Clinical Record (Bed ICU-09)"
+  },
+  {
+    "record_id": "83404654",
+    "subject_id": 10020306,
+    "stay_id": 30020306,
+    "bed_id": "Bed ICU-10",
+    "duration_hrs": 24.0,
+    "fs": 125.0,
+    "available_modalities": [
+      "ECG",
+      "PPG",
+      "Clinical Vitals"
+    ],
+    "tier": "Tier 2 (ECG+PPG)",
+    "windows_count": 4,
+    "description": "Patient #10020306 \u2014 Genuine MIMIC Waveform Record (Tier 2 (ECG+PPG))"
+  },
+  {
+    "record_id": "83411188",
+    "subject_id": 10039708,
+    "stay_id": 30039708,
+    "bed_id": "Bed ICU-11",
+    "duration_hrs": 24.0,
+    "fs": 125.0,
+    "available_modalities": [
+      "ECG",
+      "PPG",
+      "ABP",
+      "Clinical Vitals"
+    ],
+    "tier": "Tier 1 (ECG+ABP+PPG)",
+    "windows_count": 4,
+    "description": "Patient #10039708 \u2014 Genuine MIMIC Waveform Record (Tier 1 (ECG+ABP+PPG))"
+  },
+  {
+    "record_id": "88206263",
+    "subject_id": 10039708,
+    "stay_id": 30039708,
+    "bed_id": "Bed ICU-12",
+    "duration_hrs": 24.0,
+    "fs": 125.0,
+    "available_modalities": [
+      "Clinical Vitals"
+    ],
+    "tier": "Tier 4 (Other)",
+    "windows_count": 4,
+    "description": "Patient #10039708 \u2014 Genuine MIMIC Clinical Record (Bed ICU-12)"
+  },
+  {
+    "record_id": "83268087",
+    "subject_id": 10100546,
+    "stay_id": 30100546,
+    "bed_id": "Bed ICU-13",
+    "duration_hrs": 24.0,
+    "fs": 125.0,
+    "available_modalities": [
+      "ECG",
+      "PPG",
+      "Clinical Vitals"
+    ],
+    "tier": "Tier 2 (ECG+PPG)",
+    "windows_count": 4,
+    "description": "Patient #10100546 \u2014 Genuine MIMIC Waveform Record (Tier 2 (ECG+PPG))"
+  },
+  {
+    "record_id": "82924339",
+    "subject_id": 10126957,
+    "stay_id": 30126957,
+    "bed_id": "Bed ICU-14",
+    "duration_hrs": 24.0,
+    "fs": 125.0,
+    "available_modalities": [
+      "ECG",
+      "PPG"
+    ],
+    "tier": "Tier 2 (ECG+PPG)",
+    "windows_count": 4,
+    "description": "Patient #10126957 \u2014 Genuine MIMIC Waveform Record (Tier 2 (ECG+PPG))"
+  },
+  {
+    "record_id": "84248019",
+    "subject_id": 10209410,
+    "stay_id": 30209410,
+    "bed_id": "Bed ICU-15",
+    "duration_hrs": 24.0,
+    "fs": 125.0,
+    "available_modalities": [
+      "ECG",
+      "PPG",
+      "Clinical Vitals"
+    ],
+    "tier": "Tier 2 (ECG+PPG)",
+    "windows_count": 4,
+    "description": "Patient #10209410 \u2014 Genuine MIMIC Waveform Record (Tier 2 (ECG+PPG))"
+  },
+  {
+    "record_id": "88374538",
+    "subject_id": 10494990,
+    "stay_id": 30494990,
+    "bed_id": "Bed ICU-16",
+    "duration_hrs": 24.0,
+    "fs": 125.0,
+    "available_modalities": [
+      "ECG",
+      "PPG",
+      "Clinical Vitals"
+    ],
+    "tier": "Tier 2 (ECG+PPG)",
+    "windows_count": 4,
+    "description": "Patient #10494990 \u2014 Genuine MIMIC Waveform Record (Tier 2 (ECG+PPG))"
+  },
+  {
+    "record_id": "81105139",
+    "subject_id": 10560354,
+    "stay_id": 30560354,
+    "bed_id": "Bed ICU-17",
+    "duration_hrs": 24.0,
+    "fs": 125.0,
+    "available_modalities": [
+      "ECG",
+      "PPG",
+      "Clinical Vitals"
+    ],
+    "tier": "Tier 2 (ECG+PPG)",
+    "windows_count": 4,
+    "description": "Patient #10560354 \u2014 Genuine MIMIC Waveform Record (Tier 2 (ECG+PPG))"
+  },
+  {
+    "record_id": "86426168",
+    "subject_id": 10680081,
+    "stay_id": 30680081,
+    "bed_id": "Bed ICU-18",
+    "duration_hrs": 24.0,
+    "fs": 125.0,
+    "available_modalities": [
+      "ECG",
+      "PPG",
+      "Clinical Vitals"
+    ],
+    "tier": "Tier 2 (ECG+PPG)",
+    "windows_count": 4,
+    "description": "Patient #10680081 \u2014 Genuine MIMIC Waveform Record (Tier 2 (ECG+PPG))"
+  },
+  {
+    "record_id": "81826943",
+    "subject_id": 10882818,
+    "stay_id": 30882818,
+    "bed_id": "Bed ICU-19",
+    "duration_hrs": 24.0,
+    "fs": 125.0,
+    "available_modalities": [
+      "ECG",
+      "PPG",
+      "Clinical Vitals"
+    ],
+    "tier": "Tier 2 (ECG+PPG)",
+    "windows_count": 4,
+    "description": "Patient #10882818 \u2014 Genuine MIMIC Waveform Record (Tier 2 (ECG+PPG))"
+  },
+  {
+    "record_id": "82439920",
+    "subject_id": 10952189,
+    "stay_id": 30952189,
+    "bed_id": "Bed ICU-20",
+    "duration_hrs": 24.0,
+    "fs": 125.0,
+    "available_modalities": [
+      "ECG",
+      "PPG",
+      "ABP",
+      "Clinical Vitals"
+    ],
+    "tier": "Tier 1 (ECG+ABP+PPG)",
+    "windows_count": 4,
+    "description": "Patient #10952189 \u2014 Genuine MIMIC Waveform Record (Tier 1 (ECG+ABP+PPG))"
+  },
+  {
+    "record_id": "82800131",
+    "subject_id": 11109975,
+    "stay_id": 30109975,
+    "bed_id": "Bed ICU-21",
+    "duration_hrs": 24.0,
+    "fs": 125.0,
+    "available_modalities": [
+      "ECG",
+      "PPG",
+      "ABP",
+      "Clinical Vitals"
+    ],
+    "tier": "Tier 1 (ECG+ABP+PPG)",
+    "windows_count": 4,
+    "description": "Patient #11109975 \u2014 Genuine MIMIC Waveform Record (Tier 1 (ECG+ABP+PPG))"
+  },
+  {
+    "record_id": "80154334",
+    "subject_id": 12801061,
+    "stay_id": 30801061,
+    "bed_id": "Bed ICU-22",
+    "duration_hrs": 24.0,
+    "fs": 125.0,
+    "available_modalities": [
+      "ECG",
+      "Clinical Vitals"
+    ],
+    "tier": "Tier 3 (ECG only)",
+    "windows_count": 4,
+    "description": "Patient #12801061 \u2014 Genuine MIMIC Waveform Record (Tier 3 (ECG only))"
+  },
+  {
+    "record_id": "87162659",
+    "subject_id": 15859796,
+    "stay_id": 30859796,
+    "bed_id": "Bed ICU-23",
+    "duration_hrs": 24.0,
+    "fs": 125.0,
+    "available_modalities": [
+      "ECG",
+      "Clinical Vitals"
+    ],
+    "tier": "Tier 3 (ECG only)",
+    "windows_count": 4,
+    "description": "Patient #15859796 \u2014 Genuine MIMIC Waveform Record (Tier 3 (ECG only))"
+  },
+  {
+    "record_id": "83863589",
+    "subject_id": 17578102,
+    "stay_id": 30578102,
+    "bed_id": "Bed ICU-24",
+    "duration_hrs": 24.0,
+    "fs": 125.0,
+    "available_modalities": [
+      "ECG",
+      "Clinical Vitals"
+    ],
+    "tier": "Tier 3 (ECG only)",
+    "windows_count": 4,
+    "description": "Patient #17578102 \u2014 Genuine MIMIC Waveform Record (Tier 3 (ECG only))"
+  }
+]

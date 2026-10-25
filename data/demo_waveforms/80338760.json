@@ -1,0 +1,657 @@
+{
+  "record_id": "80338760",
+  "subject_id": 10003004,
+  "stay_id": 30003004,
+  "bed_id": "Bed ICU-04",
+  "duration_hrs": 24.0,
+  "fs": 125.0,
+  "available_modalities": [
+    "Clinical Vitals"
+  ],
+  "tier": "Tier 4 (Other)",
+  "windows_count": 4,
+  "description": "Patient #10003004 \u2014 Genuine MIMIC Clinical Record (Bed ICU-04)",
+  "windows": [
+    {
+      "record_id": "80338760",
+      "subject_id": 10003004,
+      "window_index": 0,
+      "timestamp": "2146-06-22 12:09:00",
+      "clinical_features": {
+        "HR": 97.0,
+        "SpO2": 99.0,
+        "Resp": 28.0,
+        "SysBP": 63.0,
+        "DiaBP": 41.0,
+        "MAP": 46.0,
+        "Temp": 36.1
+      },
+      "waveform_features": {
+        "ECG_mean": 0.0,
+        "ECG_std": 0.0,
+        "ECG_rms": 0.0,
+        "ECG_ptp": 0.0,
+        "ECG_zero_crossings": 0.0,
+        "ECG_is_missing": 1.0,
+        "ABP_mean": 0.0,
+        "ABP_std": 0.0,
+        "ABP_sys_max": 0.0,
+        "ABP_dia_min": 0.0,
+        "ABP_pulse_pressure": 0.0,
+        "ABP_is_missing": 1.0,
+        "PPG_mean": 0.0,
+        "PPG_std": 0.0,
+        "PPG_peak_max": 0.0,
+        "PPG_trough_min": 0.0,
+        "PPG_amplitude_range": 0.0,
+        "PPG_is_missing": 1.0
+      },
+      "clinical_score": 69.7,
+      "waveform_score": 51.6,
+      "fusion_score": 69.7,
+      "risk_score": 69.7,
+      "risk_category": "MEDIUM",
+      "risk_trend_delta": 0.0,
+      "risk_trend_status": "STABLE",
+      "priority_status": "HIGH_PRIORITY",
+      "available_modalities": [
+        "Clinical Vitals"
+      ],
+      "contributing_factors": [
+        {
+          "factor": "Hypotension / Low MAP",
+          "modality": "Clinical Vitals",
+          "severity": "HIGH",
+          "impact": "HIGH",
+          "evidence": "Mean Arterial Pressure at 46.0 mmHg (target >= 65 mmHg)",
+          "description": "Mean Arterial Pressure at 46.0 mmHg (target >= 65 mmHg)",
+          "contribution_score": 28.5
+        },
+        {
+          "factor": "Tachypnea",
+          "modality": "Clinical Vitals",
+          "severity": "MEDIUM",
+          "impact": "MEDIUM",
+          "evidence": "Respiratory rate of 28.0 breaths/min elevated",
+          "description": "Respiratory rate of 28.0 breaths/min elevated",
+          "contribution_score": 7.2
+        }
+      ],
+      "waveform_samples": {
+        "ecg": [],
+        "ppg": [],
+        "abp": []
+      },
+      "individual_predictions": {
+        "ecg": {
+          "modality": "ECG",
+          "modality_name": "ECG Lead II",
+          "model_name": "ECG Waveform Instability Model",
+          "model_version": "1.0.0",
+          "status": "data_unavailable",
+          "is_available": false,
+          "prediction": null,
+          "score": null,
+          "class_probabilities": null,
+          "risk_contribution": "0.0% (signal unmonitored)",
+          "fusion_weight": 0.0,
+          "features_used": null,
+          "explanation": "ECG Lead II signal is not connected or waveform data is unavailable for this observation window.",
+          "clinical_disclaimer": "Physiological instability indicator, not a definitive diagnostic arrhythmia classification."
+        },
+        "ppg": {
+          "modality": "PPG",
+          "modality_name": "PLETH / PPG Pulse Wave",
+          "model_name": "PPG Peripheral Perfusion Model",
+          "model_version": "1.0.0",
+          "status": "data_unavailable",
+          "is_available": false,
+          "prediction": null,
+          "score": null,
+          "class_probabilities": null,
+          "risk_contribution": "0.0% (signal unmonitored)",
+          "fusion_weight": 0.0,
+          "features_used": null,
+          "explanation": "PPG / Plethysmograph pulse waveform is not connected or unavailable for this observation window.",
+          "clinical_disclaimer": "Physiological perfusion indicator, not a diagnostic peripheral vascular disease evaluation."
+        },
+        "abp": {
+          "modality": "ABP",
+          "modality_name": "Arterial Line ABP",
+          "model_name": "ABP Hemodynamic Instability Model",
+          "model_version": "1.0.0",
+          "status": "data_unavailable",
+          "is_available": false,
+          "prediction": null,
+          "score": null,
+          "class_probabilities": null,
+          "risk_contribution": "0.0% (signal unmonitored)",
+          "fusion_weight": 0.0,
+          "features_used": null,
+          "explanation": "Invasive Arterial Line (ABP) is not connected or unmonitored for this patient.",
+          "clinical_disclaimer": "Hemodynamic instability indicator, not a definitive shock diagnosis."
+        },
+        "clinical": {
+          "modality": "Clinical Vitals",
+          "modality_name": "Observed Bedside Vitals",
+          "model_name": "Bedside Clinical Instability Model",
+          "model_version": "1.0.0",
+          "status": "prediction_available",
+          "is_available": true,
+          "prediction": "Moderate Vital Instability",
+          "score": 69.7,
+          "class_probabilities": {
+            "normal": 0.3027,
+            "vital_instability": 0.6973
+          },
+          "risk_contribution": "100% linear contribution to composite multimodal risk (waveform stream absent; 100% vital-dominant)",
+          "fusion_weight": 1.0,
+          "features_used": {
+            "HR": 97.0,
+            "SpO2": 99.0,
+            "Resp": 28.0,
+            "SysBP": 63.0,
+            "DiaBP": 41.0,
+            "MAP": 46.0,
+            "Temp": 36.1
+          },
+          "explanation": "Temperature-calibrated logistic regression evaluating acute multi-parameter bedside vital deviations against physiological thresholds.",
+          "clinical_disclaimer": "Physiological instability indicator, not a medical diagnostic model."
+        }
+      },
+      "disclaimer": "CareMind Physiological Risk Score (0-100) is an engineering prototype decision-support metric for physiological instability, not a diagnostic or mortality prediction model."
+    },
+    {
+      "record_id": "80338760",
+      "subject_id": 10003004,
+      "window_index": 1,
+      "timestamp": "2146-06-22 12:30:00",
+      "clinical_features": {
+        "HR": 106.0,
+        "SpO2": 92.0,
+        "Resp": 31.0,
+        "SysBP": 75.0,
+        "DiaBP": 52.0,
+        "MAP": 56.0,
+        "Temp": 36.1
+      },
+      "waveform_features": {
+        "ECG_mean": 0.0,
+        "ECG_std": 0.0,
+        "ECG_rms": 0.0,
+        "ECG_ptp": 0.0,
+        "ECG_zero_crossings": 0.0,
+        "ECG_is_missing": 1.0,
+        "ABP_mean": 0.0,
+        "ABP_std": 0.0,
+        "ABP_sys_max": 0.0,
+        "ABP_dia_min": 0.0,
+        "ABP_pulse_pressure": 0.0,
+        "ABP_is_missing": 1.0,
+        "PPG_mean": 0.0,
+        "PPG_std": 0.0,
+        "PPG_peak_max": 0.0,
+        "PPG_trough_min": 0.0,
+        "PPG_amplitude_range": 0.0,
+        "PPG_is_missing": 1.0
+      },
+      "clinical_score": 92.0,
+      "waveform_score": 51.6,
+      "fusion_score": 92.0,
+      "risk_score": 92.0,
+      "risk_category": "HIGH",
+      "risk_trend_delta": 22.3,
+      "risk_trend_status": "ESCALATING",
+      "priority_status": "CRITICAL_PRIORITY",
+      "available_modalities": [
+        "Clinical Vitals"
+      ],
+      "contributing_factors": [
+        {
+          "factor": "Rapid Risk Escalation",
+          "modality": "Temporal Trend",
+          "severity": "HIGH",
+          "impact": "HIGH",
+          "evidence": "CareMind risk score escalated by +22.3 points in recent observation window",
+          "description": "CareMind risk score escalated by +22.3 points in recent observation window",
+          "contribution_score": 30.0
+        },
+        {
+          "factor": "Hypotension / Low MAP",
+          "modality": "Clinical Vitals",
+          "severity": "HIGH",
+          "impact": "HIGH",
+          "evidence": "Mean Arterial Pressure at 56.0 mmHg (target >= 65 mmHg)",
+          "description": "Mean Arterial Pressure at 56.0 mmHg (target >= 65 mmHg)",
+          "contribution_score": 13.5
+        },
+        {
+          "factor": "Tachypnea",
+          "modality": "Clinical Vitals",
+          "severity": "MEDIUM",
+          "impact": "MEDIUM",
+          "evidence": "Respiratory rate of 31.0 breaths/min elevated",
+          "description": "Respiratory rate of 31.0 breaths/min elevated",
+          "contribution_score": 10.8
+        },
+        {
+          "factor": "Hypoxia / Reduced SpO2",
+          "modality": "Clinical Vitals",
+          "severity": "HIGH",
+          "impact": "HIGH",
+          "evidence": "SpO2 saturation level at 92.0% (normal >= 95%)",
+          "description": "SpO2 saturation level at 92.0% (normal >= 95%)",
+          "contribution_score": 7.5
+        },
+        {
+          "factor": "Elevated Heart Rate",
+          "modality": "Clinical Vitals",
+          "severity": "HIGH",
+          "impact": "HIGH",
+          "evidence": "HR of 106.0 bpm exceeds tachycardia threshold (100 bpm)",
+          "description": "HR of 106.0 bpm exceeds tachycardia threshold (100 bpm)",
+          "contribution_score": 4.8
+        }
+      ],
+      "waveform_samples": {
+        "ecg": [],
+        "ppg": [],
+        "abp": []
+      },
+      "individual_predictions": {
+        "ecg": {
+          "modality": "ECG",
+          "modality_name": "ECG Lead II",
+          "model_name": "ECG Waveform Instability Model",
+          "model_version": "1.0.0",
+          "status": "data_unavailable",
+          "is_available": false,
+          "prediction": null,
+          "score": null,
+          "class_probabilities": null,
+          "risk_contribution": "0.0% (signal unmonitored)",
+          "fusion_weight": 0.0,
+          "features_used": null,
+          "explanation": "ECG Lead II signal is not connected or waveform data is unavailable for this observation window.",
+          "clinical_disclaimer": "Physiological instability indicator, not a definitive diagnostic arrhythmia classification."
+        },
+        "ppg": {
+          "modality": "PPG",
+          "modality_name": "PLETH / PPG Pulse Wave",
+          "model_name": "PPG Peripheral Perfusion Model",
+          "model_version": "1.0.0",
+          "status": "data_unavailable",
+          "is_available": false,
+          "prediction": null,
+          "score": null,
+          "class_probabilities": null,
+          "risk_contribution": "0.0% (signal unmonitored)",
+          "fusion_weight": 0.0,
+          "features_used": null,
+          "explanation": "PPG / Plethysmograph pulse waveform is not connected or unavailable for this observation window.",
+          "clinical_disclaimer": "Physiological perfusion indicator, not a diagnostic peripheral vascular disease evaluation."
+        },
+        "abp": {
+          "modality": "ABP",
+          "modality_name": "Arterial Line ABP",
+          "model_name": "ABP Hemodynamic Instability Model",
+          "model_version": "1.0.0",
+          "status": "data_unavailable",
+          "is_available": false,
+          "prediction": null,
+          "score": null,
+          "class_probabilities": null,
+          "risk_contribution": "0.0% (signal unmonitored)",
+          "fusion_weight": 0.0,
+          "features_used": null,
+          "explanation": "Invasive Arterial Line (ABP) is not connected or unmonitored for this patient.",
+          "clinical_disclaimer": "Hemodynamic instability indicator, not a definitive shock diagnosis."
+        },
+        "clinical": {
+          "modality": "Clinical Vitals",
+          "modality_name": "Observed Bedside Vitals",
+          "model_name": "Bedside Clinical Instability Model",
+          "model_version": "1.0.0",
+          "status": "prediction_available",
+          "is_available": true,
+          "prediction": "Critical Vital Derangement",
+          "score": 92.0,
+          "class_probabilities": {
+            "normal": 0.0796,
+            "vital_instability": 0.9204
+          },
+          "risk_contribution": "100% linear contribution to composite multimodal risk (waveform stream absent; 100% vital-dominant)",
+          "fusion_weight": 1.0,
+          "features_used": {
+            "HR": 106.0,
+            "SpO2": 92.0,
+            "Resp": 31.0,
+            "SysBP": 75.0,
+            "DiaBP": 52.0,
+            "MAP": 56.0,
+            "Temp": 36.1
+          },
+          "explanation": "Temperature-calibrated logistic regression evaluating acute multi-parameter bedside vital deviations against physiological thresholds.",
+          "clinical_disclaimer": "Physiological instability indicator, not a medical diagnostic model."
+        }
+      },
+      "disclaimer": "CareMind Physiological Risk Score (0-100) is an engineering prototype decision-support metric for physiological instability, not a diagnostic or mortality prediction model."
+    },
+    {
+      "record_id": "80338760",
+      "subject_id": 10003004,
+      "window_index": 2,
+      "timestamp": "2146-06-22 12:45:00",
+      "clinical_features": {
+        "HR": 105.0,
+        "SpO2": 92.0,
+        "Resp": 28.0,
+        "SysBP": 52.0,
+        "DiaBP": 25.0,
+        "MAP": 32.0,
+        "Temp": 36.1
+      },
+      "waveform_features": {
+        "ECG_mean": 0.0,
+        "ECG_std": 0.0,
+        "ECG_rms": 0.0,
+        "ECG_ptp": 0.0,
+        "ECG_zero_crossings": 0.0,
+        "ECG_is_missing": 1.0,
+        "ABP_mean": 0.0,
+        "ABP_std": 0.0,
+        "ABP_sys_max": 0.0,
+        "ABP_dia_min": 0.0,
+        "ABP_pulse_pressure": 0.0,
+        "ABP_is_missing": 1.0,
+        "PPG_mean": 0.0,
+        "PPG_std": 0.0,
+        "PPG_peak_max": 0.0,
+        "PPG_trough_min": 0.0,
+        "PPG_amplitude_range": 0.0,
+        "PPG_is_missing": 1.0
+      },
+      "clinical_score": 90.5,
+      "waveform_score": 51.6,
+      "fusion_score": 90.5,
+      "risk_score": 90.5,
+      "risk_category": "HIGH",
+      "risk_trend_delta": -1.5,
+      "risk_trend_status": "STABLE",
+      "priority_status": "CRITICAL_PRIORITY",
+      "available_modalities": [
+        "Clinical Vitals"
+      ],
+      "contributing_factors": [
+        {
+          "factor": "Hypotension / Low MAP",
+          "modality": "Clinical Vitals",
+          "severity": "HIGH",
+          "impact": "HIGH",
+          "evidence": "Mean Arterial Pressure at 32.0 mmHg (target >= 65 mmHg)",
+          "description": "Mean Arterial Pressure at 32.0 mmHg (target >= 65 mmHg)",
+          "contribution_score": 35.0
+        },
+        {
+          "factor": "Hypoxia / Reduced SpO2",
+          "modality": "Clinical Vitals",
+          "severity": "HIGH",
+          "impact": "HIGH",
+          "evidence": "SpO2 saturation level at 92.0% (normal >= 95%)",
+          "description": "SpO2 saturation level at 92.0% (normal >= 95%)",
+          "contribution_score": 7.5
+        },
+        {
+          "factor": "Tachypnea",
+          "modality": "Clinical Vitals",
+          "severity": "MEDIUM",
+          "impact": "MEDIUM",
+          "evidence": "Respiratory rate of 28.0 breaths/min elevated",
+          "description": "Respiratory rate of 28.0 breaths/min elevated",
+          "contribution_score": 7.2
+        },
+        {
+          "factor": "Elevated Heart Rate",
+          "modality": "Clinical Vitals",
+          "severity": "HIGH",
+          "impact": "HIGH",
+          "evidence": "HR of 105.0 bpm exceeds tachycardia threshold (100 bpm)",
+          "description": "HR of 105.0 bpm exceeds tachycardia threshold (100 bpm)",
+          "contribution_score": 4.0
+        }
+      ],
+      "waveform_samples": {
+        "ecg": [],
+        "ppg": [],
+        "abp": []
+      },
+      "individual_predictions": {
+        "ecg": {
+          "modality": "ECG",
+          "modality_name": "ECG Lead II",
+          "model_name": "ECG Waveform Instability Model",
+          "model_version": "1.0.0",
+          "status": "data_unavailable",
+          "is_available": false,
+          "prediction": null,
+          "score": null,
+          "class_probabilities": null,
+          "risk_contribution": "0.0% (signal unmonitored)",
+          "fusion_weight": 0.0,
+          "features_used": null,
+          "explanation": "ECG Lead II signal is not connected or waveform data is unavailable for this observation window.",
+          "clinical_disclaimer": "Physiological instability indicator, not a definitive diagnostic arrhythmia classification."
+        },
+        "ppg": {
+          "modality": "PPG",
+          "modality_name": "PLETH / PPG Pulse Wave",
+          "model_name": "PPG Peripheral Perfusion Model",
+          "model_version": "1.0.0",
+          "status": "data_unavailable",
+          "is_available": false,
+          "prediction": null,
+          "score": null,
+          "class_probabilities": null,
+          "risk_contribution": "0.0% (signal unmonitored)",
+          "fusion_weight": 0.0,
+          "features_used": null,
+          "explanation": "PPG / Plethysmograph pulse waveform is not connected or unavailable for this observation window.",
+          "clinical_disclaimer": "Physiological perfusion indicator, not a diagnostic peripheral vascular disease evaluation."
+        },
+        "abp": {
+          "modality": "ABP",
+          "modality_name": "Arterial Line ABP",
+          "model_name": "ABP Hemodynamic Instability Model",
+          "model_version": "1.0.0",
+          "status": "data_unavailable",
+          "is_available": false,
+          "prediction": null,
+          "score": null,
+          "class_probabilities": null,
+          "risk_contribution": "0.0% (signal unmonitored)",
+          "fusion_weight": 0.0,
+          "features_used": null,
+          "explanation": "Invasive Arterial Line (ABP) is not connected or unmonitored for this patient.",
+          "clinical_disclaimer": "Hemodynamic instability indicator, not a definitive shock diagnosis."
+        },
+        "clinical": {
+          "modality": "Clinical Vitals",
+          "modality_name": "Observed Bedside Vitals",
+          "model_name": "Bedside Clinical Instability Model",
+          "model_version": "1.0.0",
+          "status": "prediction_available",
+          "is_available": true,
+          "prediction": "Critical Vital Derangement",
+          "score": 90.5,
+          "class_probabilities": {
+            "normal": 0.0949,
+            "vital_instability": 0.9051
+          },
+          "risk_contribution": "100% linear contribution to composite multimodal risk (waveform stream absent; 100% vital-dominant)",
+          "fusion_weight": 1.0,
+          "features_used": {
+            "HR": 105.0,
+            "SpO2": 92.0,
+            "Resp": 28.0,
+            "SysBP": 52.0,
+            "DiaBP": 25.0,
+            "MAP": 32.0,
+            "Temp": 36.1
+          },
+          "explanation": "Temperature-calibrated logistic regression evaluating acute multi-parameter bedside vital deviations against physiological thresholds.",
+          "clinical_disclaimer": "Physiological instability indicator, not a medical diagnostic model."
+        }
+      },
+      "disclaimer": "CareMind Physiological Risk Score (0-100) is an engineering prototype decision-support metric for physiological instability, not a diagnostic or mortality prediction model."
+    },
+    {
+      "record_id": "80338760",
+      "subject_id": 10003004,
+      "window_index": 3,
+      "timestamp": "2146-06-22 13:00:00",
+      "clinical_features": {
+        "HR": 104.0,
+        "SpO2": 100.0,
+        "Resp": 18.0,
+        "SysBP": 62.0,
+        "DiaBP": 36.0,
+        "MAP": 43.0,
+        "Temp": 35.0
+      },
+      "waveform_features": {
+        "ECG_mean": 0.0,
+        "ECG_std": 0.0,
+        "ECG_rms": 0.0,
+        "ECG_ptp": 0.0,
+        "ECG_zero_crossings": 0.0,
+        "ECG_is_missing": 1.0,
+        "ABP_mean": 0.0,
+        "ABP_std": 0.0,
+        "ABP_sys_max": 0.0,
+        "ABP_dia_min": 0.0,
+        "ABP_pulse_pressure": 0.0,
+        "ABP_is_missing": 1.0,
+        "PPG_mean": 0.0,
+        "PPG_std": 0.0,
+        "PPG_peak_max": 0.0,
+        "PPG_trough_min": 0.0,
+        "PPG_amplitude_range": 0.0,
+        "PPG_is_missing": 1.0
+      },
+      "clinical_score": 44.1,
+      "waveform_score": 51.6,
+      "fusion_score": 44.1,
+      "risk_score": 44.1,
+      "risk_category": "LOW",
+      "risk_trend_delta": -46.4,
+      "risk_trend_status": "IMPROVING",
+      "priority_status": "ROUTINE_MONITORING",
+      "available_modalities": [
+        "Clinical Vitals"
+      ],
+      "contributing_factors": [
+        {
+          "factor": "Hypotension / Low MAP",
+          "modality": "Clinical Vitals",
+          "severity": "HIGH",
+          "impact": "HIGH",
+          "evidence": "Mean Arterial Pressure at 43.0 mmHg (target >= 65 mmHg)",
+          "description": "Mean Arterial Pressure at 43.0 mmHg (target >= 65 mmHg)",
+          "contribution_score": 33.0
+        },
+        {
+          "factor": "Elevated Heart Rate",
+          "modality": "Clinical Vitals",
+          "severity": "HIGH",
+          "impact": "HIGH",
+          "evidence": "HR of 104.0 bpm exceeds tachycardia threshold (100 bpm)",
+          "description": "HR of 104.0 bpm exceeds tachycardia threshold (100 bpm)",
+          "contribution_score": 3.2
+        }
+      ],
+      "waveform_samples": {
+        "ecg": [],
+        "ppg": [],
+        "abp": []
+      },
+      "individual_predictions": {
+        "ecg": {
+          "modality": "ECG",
+          "modality_name": "ECG Lead II",
+          "model_name": "ECG Waveform Instability Model",
+          "model_version": "1.0.0",
+          "status": "data_unavailable",
+          "is_available": false,
+          "prediction": null,
+          "score": null,
+          "class_probabilities": null,
+          "risk_contribution": "0.0% (signal unmonitored)",
+          "fusion_weight": 0.0,
+          "features_used": null,
+          "explanation": "ECG Lead II signal is not connected or waveform data is unavailable for this observation window.",
+          "clinical_disclaimer": "Physiological instability indicator, not a definitive diagnostic arrhythmia classification."
+        },
+        "ppg": {
+          "modality": "PPG",
+          "modality_name": "PLETH / PPG Pulse Wave",
+          "model_name": "PPG Peripheral Perfusion Model",
+          "model_version": "1.0.0",
+          "status": "data_unavailable",
+          "is_available": false,
+          "prediction": null,
+          "score": null,
+          "class_probabilities": null,
+          "risk_contribution": "0.0% (signal unmonitored)",
+          "fusion_weight": 0.0,
+          "features_used": null,
+          "explanation": "PPG / Plethysmograph pulse waveform is not connected or unavailable for this observation window.",
+          "clinical_disclaimer": "Physiological perfusion indicator, not a diagnostic peripheral vascular disease evaluation."
+        },
+        "abp": {
+          "modality": "ABP",
+          "modality_name": "Arterial Line ABP",
+          "model_name": "ABP Hemodynamic Instability Model",
+          "model_version": "1.0.0",
+          "status": "data_unavailable",
+          "is_available": false,
+          "prediction": null,
+          "score": null,
+          "class_probabilities": null,
+          "risk_contribution": "0.0% (signal unmonitored)",
+          "fusion_weight": 0.0,
+          "features_used": null,
+          "explanation": "Invasive Arterial Line (ABP) is not connected or unmonitored for this patient.",
+          "clinical_disclaimer": "Hemodynamic instability indicator, not a definitive shock diagnosis."
+        },
+        "clinical": {
+          "modality": "Clinical Vitals",
+          "modality_name": "Observed Bedside Vitals",
+          "model_name": "Bedside Clinical Instability Model",
+          "model_version": "1.0.0",
+          "status": "prediction_available",
+          "is_available": true,
+          "prediction": "Low Risk / Stable",
+          "score": 44.1,
+          "class_probabilities": {
+            "normal": 0.5591,
+            "vital_instability": 0.4409
+          },
+          "risk_contribution": "100% linear contribution to composite multimodal risk (waveform stream absent; 100% vital-dominant)",
+          "fusion_weight": 1.0,
+          "features_used": {
+            "HR": 104.0,
+            "SpO2": 100.0,
+            "Resp": 18.0,
+            "SysBP": 62.0,
+            "DiaBP": 36.0,
+            "MAP": 43.0,
+            "Temp": 35.0
+          },
+          "explanation": "Temperature-calibrated logistic regression evaluating acute multi-parameter bedside vital deviations against physiological thresholds.",
+          "clinical_disclaimer": "Physiological instability indicator, not a medical diagnostic model."
+        }
+      },
+      "disclaimer": "CareMind Physiological Risk Score (0-100) is an engineering prototype decision-support metric for physiological instability, not a diagnostic or mortality prediction model."
+    }
+  ]
+}
